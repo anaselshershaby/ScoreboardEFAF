@@ -1,4 +1,3 @@
-<!-- dashboard.html -->
 <!DOCTYPE html>
 <html>
 <head>
@@ -138,302 +137,123 @@
                     </div>
                 `);
             }
-
         </script>
     </div>
-<script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
     <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBnHWRcCF4P8aneCbpKPWj3picLajwjEJA",
+            authDomain: "efaf-scoreborad.firebaseapp.com",
+            databaseURL: "https://efaf-scoreborad-default-rtdb.firebaseio.com",
+            projectId: "efaf-scoreborad",
+            storageBucket: "efaf-scoreborad.appspot.com",
+            messagingSenderId: "422493280611",
+            appId: "1:422493280611:web:76bff49b2ed92464b2db56",
+            measurementId: "G-2P220TFGL6"
+        };
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // Update team name in Firebase
+        function updateTeamName(game, team, name) {
+            db.ref(`games/game${game}/team${team}/name`).set(name);
+        }
+
+        // Update team score in Firebase
+        function updateScore(game, team, score) {
+            db.ref(`games/game${game}/team${team}/score`).set(score);
+        }
+
+        // Adjust score (add points)
+        function adjustScore(game, team, points) {
+            const scoreRef = db.ref(`games/game${game}/team${team}/score`);
+            scoreRef.once("value").then(snapshot => {
+                let newScore = (snapshot.val() || 0) + points;
+                if (newScore < 0) newScore = 0;
+                scoreRef.set(newScore);
+            });
+        }
+
+        // Reset score to 0
+        function resetScore(game, team) {
+            db.ref(`games/game${game}/team${team}/score`).set(0);
+        }
+
+        // Upload team logo
         function uploadTeamLogo(game, team) {
             const file = document.getElementById(`logo${team}-upload-game${game}`).files[0];
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    localStorage.setItem(`team-logo-${team}-game${game}`, e.target.result);
-                    document.getElementById(`logo${team}-game${game}`).src = e.target.result;
+                    db.ref(`games/game${game}/team${team}/logo`).set(e.target.result);
                 };
                 reader.readAsDataURL(file);
             }
         }
 
-        function updateTeamName(game, team, name) {
-            localStorage.setItem(`team-name-${team}-game${game}`, name);
-        }
-
-        function updateScore(game, team, score) {
-            localStorage.setItem(`team-score-${team}-game${game}`, score);
-        }
-
-        function adjustScore(game, team, points) {
-            const scoreElement = document.getElementById(`score${team}-game${game}`);
-            let score = parseInt(scoreElement.value) + points;
-            scoreElement.value = score;
-            updateScore(game, team, score);
-        }
-
-        function resetScore(game, team) {
-            document.getElementById(`score${team}-game${game}`).value = 0;
-            updateScore(game, team, 0);
-        }
-
+        // Upload background image
         function uploadBackground() {
             const file = document.getElementById('backgroundUpload').files[0];
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    document.body.style.backgroundImage = `url(${e.target.result})`;
-                    localStorage.setItem('background-image', e.target.result);
+                    db.ref('background').set(e.target.result);
                 };
                 reader.readAsDataURL(file);
             }
         }
 
+        // Clear background image
         function clearBackground() {
-            document.body.style.backgroundImage = '';
-            localStorage.removeItem('background-image');
+            db.ref('background').set('');
         }
 
+        // Load initial data from Firebase
         window.addEventListener('load', () => {
             for (let game = 1; game <= 3; game++) {
                 for (let team = 1; team <= 2; team++) {
-                    const logo = localStorage.getItem(`team-logo-${team}-game${game}`);
-                    if (logo) {
-                        document.getElementById(`logo${team}-game${game}`).src = logo;
-                    }
-                    const name = localStorage.getItem(`team-name-${team}-game${game}`);
-                    if (name) {
-                        document.getElementById(`name${team}-game${game}`).value = name;
-                    }
-                    const score = localStorage.getItem(`team-score-${team}-game${game}`);
-                    if (score) {
-                        document.getElementById(`score${team}-game${game}`).value = score;
-                    }
+                    // Listen for name changes
+                    db.ref(`games/game${game}/team${team}/name`).on('value', (snapshot) => {
+                        const name = snapshot.val();
+                        if (name) {
+                            document.getElementById(`name${team}-game${game}`).value = name;
+                        }
+                    });
+
+                    // Listen for score changes
+                    db.ref(`games/game${game}/team${team}/score`).on('value', (snapshot) => {
+                        const score = snapshot.val();
+                        if (score !== null) {
+                            document.getElementById(`score${team}-game${game}`).value = score;
+                        }
+                    });
+
+                    // Listen for logo changes
+                    db.ref(`games/game${game}/team${team}/logo`).on('value', (snapshot) => {
+                        const logo = snapshot.val();
+                        if (logo) {
+                            document.getElementById(`logo${team}-game${game}`).src = logo;
+                        }
+                    });
                 }
             }
-            const background = localStorage.getItem('background-image');
-            if (background) {
-                document.body.style.backgroundImage = `url(${background})`;
-            }
+
+            // Listen for background changes
+            db.ref('background').on('value', (snapshot) => {
+                const background = snapshot.val();
+                if (background) {
+                    document.body.style.backgroundImage = `url(${background})`;
+                } else {
+                    document.body.style.backgroundImage = '';
+                }
+            });
         });
- // Update these functions to match scoreboard's key pattern
-    function updateTeamName(game, team, name) {
-        localStorage.setItem(`name-${team}-${game}`, name);
-        window.dispatchEvent(new Event('storage'));
-    }
-
-    function updateScore(game, team, score) {
-        localStorage.setItem(`score-${team}-${game}`, score);
-        window.dispatchEvent(new Event('storage'));
-    }
-
-    function adjustScore(game, team, points) {
-        const scoreElement = document.getElementById(`score${team}-game${game}`);
-        let score = parseInt(scoreElement.value) + points;
-        scoreElement.value = score;
-        updateScore(game, team, score);
-    }
-
-    function resetScore(game, team) {
-        document.getElementById(`score${team}-game${game}`).value = 0;
-        updateScore(game, team, 0);
-    }
-
-    // Update background storage key to match scoreboard
-    function uploadBackground() {
-        const file = document.getElementById('backgroundUpload').files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                document.body.style.backgroundImage = `url(${e.target.result})`;
-                localStorage.setItem('scoreboard-background', e.target.result);
-            };
-            reader.readAsDataURL(file);
-        }
-    }
-
-    window.addEventListener('load', () => {
-        // Load existing data with correct key pattern
-        for (let game = 1; game <= 3; game++) {
-            for (let team = 1; team <= 2; team++) {
-                const logo = localStorage.getItem(`team-logo-${team}-game${game}`);
-                if (logo) {
-                    document.getElementById(`logo${team}-game${game}`).src = logo;
-                }
-                const name = localStorage.getItem(`name-${team}-${game}`);
-                if (name) {
-                    document.getElementById(`name${team}-game${game}`).value = name;
-                }
-                const score = localStorage.getItem(`score-${team}-${game}`);
-                if (score) {
-                    document.getElementById(`score${team}-game${game}`).value = score;
-                }
-            }
-        }
-        const background = localStorage.getItem('scoreboard-background');
-        if (background) {
-            document.body.style.backgroundImage = `url(${background})`;
-        }
-    });
-
     </script>
-
-<script>
-    let peer;
-    let conn;
-
-    // Initialize PeerJS (host)
-    function initializeHost() {
-        const hostId = "dashboard-host"; // Unique ID for the host
-        peer = new Peer(hostId);
-
-        peer.on("open", (id) => {
-            console.log("Host ID:", id);
-        });
-
-        // Listen for connections from peers
-        peer.on("connection", (connection) => {
-            conn = connection;
-            console.log("Scoreboard connected:", connection.peer);
-
-            // Send initial data to the scoreboard
-            conn.send({ type: "init", data: getCurrentData() });
-
-            // Listen for messages from the scoreboard
-            conn.on("data", (data) => {
-                console.log("Received from scoreboard:", data);
-            });
-        });
-    }
-
-    // Send updates to the scoreboard
-    function sendUpdate(data) {
-        if (conn && conn.open) {
-            conn.send({ type: "update", data });
-        }
-    }
-
-    // Example: Update team name
-    function updateTeamName(game, team, name) {
-        const data = { game, team, name };
-        sendUpdate(data);
-    }
-
-    // Example: Update team score
-    function updateScore(game, team, score) {
-        const data = { game, team, score };
-        sendUpdate(data);
-    }
-
-    // Get current data (for initialization)
-    function getCurrentData() {
-        const data = {};
-        for (let game = 1; game <= 3; game++) {
-            for (let team = 1; team <= 2; team++) {
-                data[`name-${team}-${game}`] = document.getElementById(`name${team}-game${game}`).value;
-                data[`score-${team}-${game}`] = document.getElementById(`score${team}-game${game}`).value;
-            }
-        }
-        return data;
-    }
-
-    // Initialize the host when the page loads
-    window.addEventListener("load", initializeHost);
-</script>
-<script>
-    let peer;
-    let conn;
-
-    // Initialize PeerJS (peer)
-    function initializePeer() {
-        const peerId = "scoreboard-peer"; // Unique ID for the peer
-        peer = new Peer(peerId);
-
-        peer.on("open", (id) => {
-            console.log("Peer ID:", id);
-            connectToHost();
-        });
-
-        // Connect to the host
-        function connectToHost() {
-            const hostId = "dashboard-host"; // Host ID
-            conn = peer.connect(hostId);
-
-            conn.on("open", () => {
-                console.log("Connected to host:", hostId);
-
-                // Listen for messages from the host
-                conn.on("data", (data) => {
-                    if (data.type === "init") {
-                        // Initialize scoreboard with current data
-                        updateScoreboard(data.data);
-                    } else if (data.type === "update") {
-                        // Update specific data
-                        handleUpdate(data.data);
-                    }
-                });
-            });
-        }
-    }
-
-    // Update the scoreboard with new data
-    function updateScoreboard(data) {
-        for (let game = 1; game <= 3; game++) {
-            for (let team = 1; team <= 2; team++) {
-                document.getElementById(`name${team}-game${game}`).textContent = data[`name-${team}-${game}`] || `Team ${team} ${game}`;
-                document.getElementById(`score${team}-game${game}`).textContent = data[`score-${team}-${game}`] || 0;
-            }
-        }
-    }
-
-    // Handle updates from the host
-    function handleUpdate(data) {
-        if (data.game && data.team) {
-            if (data.name) {
-                document.getElementById(`name${data.team}-game${data.game}`).textContent = data.name;
-            }
-            if (data.score) {
-                document.getElementById(`score${data.team}-game${data.game}`).textContent = data.score;
-            }
-        }
-    }
-
-    // Initialize the peer when the page loads
-    window.addEventListener("load", initializePeer);
-</script>
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
-<script>
-  // Your Firebase Configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyBnHWRcCF4P8aneCbpKPWj3picLajwjEJA",
-  authDomain: "efaf-scoreborad.firebaseapp.com",
-  databaseURL: "https://efaf-scoreborad-default-rtdb.firebaseio.com",
-  projectId: "efaf-scoreborad",
-  storageBucket: "efaf-scoreborad.firebasestorage.app",
-  messagingSenderId: "422493280611",
-  appId: "1:422493280611:web:76bff49b2ed92464b2db56",
-  measurementId: "G-2P220TFGL6"
-};
-  };
-
-  // Initialize Firebase
-  const app = firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
-</script>
-<script>
-function adjustScore(game, team, points) {
-    let scoreRef = db.ref(`games/game${game}/team${team}/score`);
-    scoreRef.once("value").then(snapshot => {
-        let newScore = (snapshot.val() || 0) + points;
-        if (newScore < 0) newScore = 0;
-        scoreRef.set(newScore);
-    });
-}
-
-function updateTeamName(game, team, newName) {
-    db.ref(`games/game${game}/team${team}/name`).set(newName);
-}
-</script>
-
 </body>
 </html>
