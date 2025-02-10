@@ -4,7 +4,6 @@
 <head>
     <title>Live Score Display</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=College&family=Varsity+Team&display=swap">
-    <!-- Firebase v9 Compatibility Mode -->
     <script src="https://www.gstatic.com/firebasejs/9.0.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.2/firebase-database-compat.js"></script>
     <style>
@@ -21,21 +20,22 @@
             color: white;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
             min-height: 100vh;
+            background-color: #1a1a1a;
         }
 
         .scoreboard-container {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            display: flex;
+            flex-direction: column;
             gap: 30px;
-            max-width: 1800px;
+            max-width: 1200px;
             margin: 0 auto;
         }
 
         .game-card {
-            background: rgba(0, 0, 0, 0.7);
-            border-radius: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 15px;
             padding: 25px;
-            border: 3px solid gold;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
         }
 
         .teams-container {
@@ -43,47 +43,61 @@
             justify-content: space-around;
             align-items: center;
             margin: 20px 0;
+            gap: 30px;
         }
 
         .team-display {
             text-align: center;
             flex: 1;
+            padding: 20px;
         }
 
         .team-logo {
-            width: 150px;
-            height: 150px;
+            width: 120px;
+            height: 120px;
             object-fit: contain;
             margin-bottom: 15px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.1);
+            padding: 5px;
         }
 
         .team-name {
-            font-size: 2.5em;
+            font-size: 2em;
             margin: 10px 0;
+            color: #ffffff;
         }
 
         .score {
-            font-size: 4em;
-            color: gold;
+            font-size: 3.5em;
+            color: #1E90FF;
             margin: 15px 0;
             transition: all 0.3s ease;
         }
 
         .game-title {
             text-align: center;
-            font-size: 2em;
-            color: #1E90FF;
+            font-size: 1.8em;
+            color: #ffffff;
             margin-bottom: 20px;
+            border-bottom: 2px solid #1E90FF;
+            padding-bottom: 10px;
+        }
+
+        .vs {
+            font-size: 2.5em;
+            color: #ffffff;
+            opacity: 0.8;
         }
 
         @keyframes scoreUpdate {
             0% { transform: scale(1); }
-            50% { transform: scale(1.2); }
+            50% { transform: scale(1.1); }
             100% { transform: scale(1); }
         }
 
         .score-update {
-            animation: scoreUpdate 0.5s ease;
+            animation: scoreUpdate 0.3s ease;
         }
     </style>
 </head>
