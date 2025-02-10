@@ -260,28 +260,80 @@
             createGameElements();
             setupFirebaseListeners();
             
-            // Event Delegation
-            document.addEventListener('change', e => {
-                if (e.target.matches('.logo-upload')) handleLogoUpload(e);
-                if (e.target.matches('.team-name')) {
-                    const { game, team } = e.target.dataset;
-                    db.ref(getFirebasePath(game, team, 'name')).set(e.target.value);
-                }
-                if (e.target.matches('.team-score')) {
-                    const { game, team } = e.target.dataset;
-                    const value = Math.max(0, parseInt(e.target.value) || 0);
-                    db.ref(getFirebasePath(game, team, 'score')).set(value);
-                }
-            });
+            // Modified Event Delegation with proper async handling
+document.addEventListener('click', async (e) => {
+    try {
+        // Handle score adjustment buttons
+        if (e.target.matches('.points-buttons button')) {
+            const points = parseInt(e.target.dataset.points);
+            const scoreInput = e.target.closest('.points-buttons').previousElementSibling;
+            const { game, team } = scoreInput.dataset;
+            
+            // Calculate new score
+            const currentScore = parseInt(scoreInput.value) || 0;
+            const newScore = Math.max(0, currentScore + points);
+            
+            // Update Firebase
+            await db.ref(`game${game}/team${team}/score`).set(newScore);
+        }
 
-            document.addEventListener('click', e => {
-                if (e.target.matches('.points-buttons button')) handleScoreAdjust(e);
-                if (e.target.matches('.reset-button')) handleReset(e);
-            });
+        // Handle reset buttons
+        if (e.target.matches('.reset-button')) {
+            const scoreInput = e.target.previousElementSibling.querySelector('.team-score');
+            const { game, team } = scoreInput.dataset;
+            
+            // Update Firebase
+            await db.ref(`game${game}/team${team}/score`).set(0);
+        }
+    } catch (error) {
+        console.error('Button action failed:', error);
+        alert('Operation failed. Check console for details.');
+    }
+});
+
+// Enhanced Sync Function
+function syncFromFirebase(data) {
+    try {
+        // Update scores
+        document.querySelectorAll('.team-score').forEach(input => {
+            const { game, team } = input.dataset;
+            const value = data?.[`game${game}`]?.[`team${team}`]?.score || 0;
+            if (input.value !== value.toString()) {
+                input.value = value;
+            }
         });
-    </script>
-</body>
-</html>
 
+        // Update other elements... (keep existing code)
+        
+    } catch (error) {
+        console.error('Sync error:', error);
+    }
+}
+
+// Initialize with error handling
+document.addEventListener('DOMContentLoaded', () => {
+    try {
+        createGameElements();
+        setupFirebaseListeners();
+        
+        // Event listeners for input fields
+        document.addEventListener('input', async (e) => {
+            if (e.target.matches('.team-name')) {
+                const { game, team } = e.target.dataset;
+                await db.ref(`game${game}/team${team}/name`).set(e.target.value);
+            }
+            if (e.target.matches('.team-score')) {
+                const { game, team } = e.target.dataset;
+                const value = Math.max(0, parseInt(e.target.value) || 0);
+                await db.ref(`game${game}/team${team}/score`).set(value);
+            }
+        });
+
+    } catch (error) {
+        console.error('Initialization failed:', error);
+        alert('App initialization failed. Check console.');
+    }
+});
+</script>
 </body>
 </html>
