@@ -7,89 +7,22 @@
     <script src="https://www.gstatic.com/firebasejs/9.0.2/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.2/firebase-database.js"></script>
     <style>
-        :root {
-            --sports-font: 'Varsity Team', 'College', Impact, sans-serif;
-        }
-
-        body {
-            font-family: var(--sports-font);
-            margin: 0;
-            padding: 20px;
-            background-size: cover;
-            background-position: center;
-            color: white;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-        }
-
-        .scoreboard-container {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 30px;
-            max-width: 1800px;
-            margin: 0 auto;
-        }
-
-        .game-card {
-            background: rgba(0, 0, 0, 0.7);
-            border-radius: 20px;
-            padding: 25px;
-            border: 3px solid gold;
-        }
-
-        .teams-container {
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            margin: 20px 0;
-        }
-
-        .team-display {
-            text-align: center;
-            flex: 1;
-        }
-
-        .team-logo {
-            width: 150px;
-            height: 150px;
-            object-fit: contain;
-            margin-bottom: 15px;
-        }
-
-        .team-name {
-            font-size: 2.5em;
-            margin: 10px 0;
-        }
-
-        .score {
-            font-size: 4em;
-            color: gold;
-            margin: 15px 0;
-            transition: all 0.3s ease;
-        }
-
-        .game-title {
-            text-align: center;
-            font-size: 2em;
-            color: #1E90FF;
-            margin-bottom: 20px;
-        }
-
-        @keyframes scoreUpdate {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.2); }
-            100% { transform: scale(1); }
-        }
-
-        .score-update {
-            animation: scoreUpdate 0.5s ease;
-        }
+        /* Add temporary debug styles */
+        body { background-color: #1a1a1a !important; }
+        .game-card { background: red !important; }
     </style>
 </head>
 <body>
-    <div class="scoreboard-container" id="scoreboard"></div>
+    <div class="scoreboard-container" id="scoreboard">
+        <!-- Fallback content -->
+        Loading scores...
+    </div>
 
     <script>
-        // Firebase Configuration (must match control dashboard)
+        // Debugging steps
+        console.log("Initializing display dashboard...");
+
+        // 1. Verify Firebase config
         const firebaseConfig = {
             apiKey: "YOUR_API_KEY",
             authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
@@ -100,20 +33,40 @@
             appId: "YOUR_APP_ID"
         };
 
-        // Initialize Firebase
-        const app = firebase.initializeApp(firebaseConfig);
+        try {
+            const app = firebase.initializeApp(firebaseConfig);
+            console.log("Firebase initialized:", app);
+        } catch (error) {
+            console.error("Firebase initialization failed:", error);
+            document.body.innerHTML = `<h1 style="color:red">Firebase Error: ${error.message}</h1>`;
+        }
+
         const db = firebase.database();
         const scoreboardRef = db.ref('scoreboard');
 
+        // 2. Add error listeners
+        scoreboardRef.on('value', 
+            (snapshot) => {
+                console.log("Data received:", snapshot.val());
+                updateDisplay(snapshot.val());
+            },
+            (error) => {
+                console.error("Firebase error:", error);
+                document.getElementById('scoreboard').innerHTML = 
+                    `<h2 style="color:red">Database Error: ${error.message}</h2>`;
+            }
+        );
+
+        // 3. Simplified initial display
         function createScoreboard() {
             const container = document.getElementById('scoreboard');
+            container.innerHTML = ''; // Clear loading message
             
-            // Create game cards
             for (let game = 1; game <= 3; game++) {
                 const gameCard = document.createElement('div');
                 gameCard.className = 'game-card';
                 gameCard.innerHTML = `
-                    <div class="game-title">GAME ${game}</div>
+                    <h2>Game ${game}</h2>
                     <div class="teams-container">
                         ${createTeamDisplay(game, 1)}
                         <div class="vs">VS</div>
@@ -126,63 +79,66 @@
 
         function createTeamDisplay(game, team) {
             return `
-                <div class="team-display" data-game="${game}" data-team="${team}">
-                    <img class="team-logo" alt="Team Logo">
-                    <div class="team-name"></div>
+                <div class="team-display">
+                    <img class="team-logo" alt="Team ${team}">
+                    <div class="team-name">Team ${team}</div>
                     <div class="score">0</div>
                 </div>
             `;
         }
 
+        // 4. Add error handling for updateDisplay
         function updateDisplay(data) {
-            // Update background
-            if (data?.background) {
-                document.body.style.backgroundImage = `url(${data.background})`;
-            }
+            try {
+                if (!data) {
+                    console.warn("No data received");
+                    return;
+                }
 
-            // Update game data
-            for (let game = 1; game <= 3; game++) {
-                const gameData = data[`game${game}`] || {};
-                for (let team = 1; team <= 2; team++) {
-                    const teamData = gameData[`team${team}`] || {};
-                    const teamDisplay = document.querySelector(
-                        `.team-display[data-game="${game}"][data-team="${team}"]`
-                    );
+                // Update background
+                if (data.background) {
+                    document.body.style.backgroundImage = `url(${data.background})`;
+                }
 
-                    if (teamDisplay) {
-                        // Update logo
-                        const logo = teamDisplay.querySelector('.team-logo');
-                        if (teamData.logo && logo.src !== teamData.logo) {
-                            logo.src = teamData.logo;
-                        }
+                // Update games
+                for (let game = 1; game <= 3; game++) {
+                    const gameData = data[`game${game}`] || {};
+                    
+                    for (let team = 1; team <= 2; team++) {
+                        const teamData = gameData[`team${team}`] || {};
+                        const teamElement = document.querySelector(
+                            `.game-card:nth-child(${game}) .team-display:nth-child(${team})`
+                        );
 
-                        // Update name
-                        const nameElement = teamDisplay.querySelector('.team-name');
-                        if (nameElement.textContent !== teamData.name) {
-                            nameElement.textContent = teamData.name || `Team ${team}`;
-                        }
-
-                        // Update score
-                        const scoreElement = teamDisplay.querySelector('.score');
-                        if (scoreElement.textContent !== String(teamData.score || 0)) {
-                            scoreElement.classList.add('score-update');
-                            setTimeout(() => scoreElement.classList.remove('score-update'), 500);
-                            scoreElement.textContent = teamData.score || 0;
+                        if (teamElement) {
+                            // Update logo
+                            const logo = teamElement.querySelector('.team-logo');
+                            if (teamData.logo) logo.src = teamData.logo;
+                            
+                            // Update name
+                            const name = teamElement.querySelector('.team-name');
+                            if (teamData.name) name.textContent = teamData.name;
+                            
+                            // Update score
+                            const score = teamElement.querySelector('.score');
+                            if (teamData.score) score.textContent = teamData.score;
                         }
                     }
                 }
+            } catch (error) {
+                console.error("Display update error:", error);
             }
         }
 
-        // Initialize
+        // 5. Initialize with error handling
         document.addEventListener('DOMContentLoaded', () => {
-            createScoreboard();
-
-            // Real-time updates
-            scoreboardRef.on('value', (snapshot) => {
-                const data = snapshot.val() || {};
-                updateDisplay(data);
-            });
+            try {
+                createScoreboard();
+                console.log("Scoreboard initialized");
+            } catch (error) {
+                console.error("Initialization error:", error);
+                document.body.innerHTML = `<h1 style="color:red">Initialization Error: ${error.message}</h1>`;
+            }
         });
     </script>
 </body>
