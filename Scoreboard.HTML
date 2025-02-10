@@ -1,0 +1,127 @@
+<!-- scoreboard.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Live Scoreboard</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=College&family=Varsity+Team&display=swap">
+    <style>
+        :root {
+            --college-font: 'Varsity Team', 'College', Impact, sans-serif;
+            --score-color: #FFD700;
+        }
+
+        body {
+            background: #000;
+            color: white;
+            margin: 0;
+            padding: 20px;
+            transition: background 0.5s ease-in-out;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .scoreboard-container {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .game {
+            background: #111;
+            padding: 20px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 1000px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 3px solid #444;
+            position: relative;
+        }
+
+        .team {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            width: 35%;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .logo {
+            width: 150px;
+            height: 150px;
+            max-width: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 0 10px rgba(255,255,255,0.2));
+        }
+
+        .name {
+            font-family: var(--college-font);
+            font-size: 36px;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 200px;
+        }
+
+        .score {
+            font-family: var(--college-font);
+            font-size: 120px;
+            margin: 0 30px;
+            color: var(--score-color);
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.7);
+            transition: all 0.3s ease;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="scoreboard-container">
+        <script>
+            for (let game = 1; game <= 3; game++) {
+                document.write(`
+                    <div class="game">
+                        <div class="team">
+                            <div class="name" id="name1-game${game}">${localStorage.getItem(`name-1-${game}`) || `HOME TEAM ${game}`}</div>
+                            <img id="logo1-game${game}" class="logo" src="" alt="Home Team ${game} Logo">
+                        </div>
+                        <div class="score" id="score1-game${game}">${localStorage.getItem(`score-1-${game}`) || 0}</div>
+                        <div class="score" id="score2-game${game}">${localStorage.getItem(`score-2-${game}`) || 0}</div>
+                        <div class="team">
+                            <div class="name" id="name2-game${game}">${localStorage.getItem(`name-2-${game}`) || `AWAY TEAM ${game}`}</div>
+                            <img id="logo2-game${game}" class="logo" src="" alt="Away Team ${game} Logo">
+                        </div>
+                    </div>
+                `);
+            }
+        </script>
+    </div>
+    <script>
+        function updateScoreboard() {
+            for (let game = 1; game <= 3; game++) {
+                for (let team = 1; team <= 2; team++) {
+                    document.getElementById(`name${team}-game${game}`).textContent = localStorage.getItem(`name-${team}-${game}`) || `Team ${team} ${game}`;
+                    document.getElementById(`score${team}-game${game}`).textContent = localStorage.getItem(`score-${team}-${game}`) || 0;
+                    const logo = localStorage.getItem(`team-logo-${team}-game${game}`);
+                    if (logo) {
+                        document.getElementById(`logo${team}-game${game}`).src = logo;
+                    }
+                }
+            }
+            const background = localStorage.getItem("scoreboard-background");
+            if (background) {
+                document.body.style.backgroundImage = `url(${background})`;
+            }
+        }
+        
+        window.addEventListener("storage", updateScoreboard);
+        window.addEventListener("load", updateScoreboard);
+    </script>
+</body>
+</html>
