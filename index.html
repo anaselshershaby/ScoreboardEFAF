@@ -1,277 +1,112 @@
-<!-- dashboard.html -->
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Control Dashboard</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=College&family=Varsity+Team&display=swap">
-    <style>
-        :root {
-            --college-font: 'Varsity Team', 'College', Impact, sans-serif;
-        }
-
-        body {
-            font-family: var(--college-font);
-            background: #2F4F4F;
-            color: white;
-            text-align: center;
-            margin: 0;
-            padding: 20px;
-        }
-
-        .dashboard-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 20px;
-        }
-
-        .game-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 90%;
-            max-width: 1000px;
-            background: #333;
-            padding: 20px;
-            border-radius: 10px;
-            border: 2px solid white;
-        }
-
-        .team-control {
-            background: #444;
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-            flex: 1;
-        }
-
-        .team-title {
-            font-size: 24px;
-            font-weight: bold;
-        }
-
-        input[type="text"], input[type="number"] {
-            font-family: var(--college-font);
-            font-size: 20px;
-            width: 80%;
-            padding: 8px;
-            margin: 5px 0;
-            border: 2px solid white;
-            border-radius: 5px;
-            text-align: center;
-        }
-
-        .points-buttons button, .reset-button {
-            font-family: var(--college-font);
-            font-size: 18px;
-            padding: 8px 15px;
-            background: #1E90FF;
-            border: none;
-            border-radius: 8px;
-            margin: 5px;
-            cursor: pointer;
-        }
-
-        .reset-button {
-            background: #FF4500;
-        }
-
-        .upload-container {
-            margin-bottom: 20px;
-        }
-
-        .upload-container input {
-            padding: 10px;
-            border-radius: 5px;
-            background: white;
-            color: black;
-        }
-
-        .team-logo {
-            width: 50px;
-            height: 50px;
-            margin-bottom: 10px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scoreboard Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 50px;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #home-score, #away-score {
+      font-size: 24px;
+      margin: 20px;
+    }
+  </style>
 </head>
 <body>
-    <div class="dashboard-container">
-        <h1>Score Control Dashboard</h1>
-        <div class="upload-container">
-            <label for="backgroundUpload">Upload Background:</label>
-            <input type="file" id="backgroundUpload" accept="image/*" onchange="uploadBackground()">
-            <button onclick="clearBackground()" class="reset-button">Clear Background</button>
-        </div>
+  <h1>Score Control Dashboard</h1>
 
-        <script>
-            for (let game = 1; game <= 3; game++) {
-                document.write(`
-                    <div class="game-row">
-                        <div class="team-control">
-                            <div class="team-title">Home</div>
-                            <img id="logo1-game${game}" class="team-logo" src="" alt="Home Team Logo">
-                            <input type="file" id="logo1-upload-game${game}" accept="image/*" onchange="uploadTeamLogo(${game}, 1)">
-                            <input type="text" id="name1-game${game}" placeholder="Home Team ${game}" oninput="updateTeamName(${game}, 1, this.value)">
-                            <input type="number" id="score1-game${game}" value="0" oninput="updateScore(${game}, 1, this.value)">
-                            <div class="points-buttons">
-                                <button onclick="adjustScore(${game}, 1, 1)">+1</button>
-                                <button onclick="adjustScore(${game}, 1, 2)">+2</button>
-                                <button onclick="adjustScore(${game}, 1, 6)">+6</button>
-                            </div>
-                            <button class="reset-button" onclick="resetScore(${game}, 1)">Reset</button>
-                        </div>
-                        <h2>Game ${game}</h2>
-                        <div class="team-control">
-                            <div class="team-title">Away</div>
-                            <img id="logo2-game${game}" class="team-logo" src="" alt="Away Team Logo">
-                            <input type="file" id="logo2-upload-game${game}" accept="image/*" onchange="uploadTeamLogo(${game}, 2)">
-                            <input type="text" id="name2-game${game}" placeholder="Away Team ${game}" oninput="updateTeamName(${game}, 2, this.value)">
-                            <input type="number" id="score2-game${game}" value="0" oninput="updateScore(${game}, 2, this.value)">
-                            <div class="points-buttons">
-                                <button onclick="adjustScore(${game}, 2, 1)">+1</button>
-                                <button onclick="adjustScore(${game}, 2, 2)">+2</button>
-                                <button onclick="adjustScore(${game}, 2, 6)">+6</button>
-                            </div>
-                            <button class="reset-button" onclick="resetScore(${game}, 2)">Reset</button>
-                        </div>
-                    </div>
-                `);
-            }
-        </script>
-    </div>
+  <div>
+    <span id="home-score">0</span>
+    <span style="font-size: 24px;"> vs </span>
+    <span id="away-score">0</span>
+  </div>
 
-    <script>
-        function uploadTeamLogo(game, team) {
-            const file = document.getElementById(`logo${team}-upload-game${game}`).files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    localStorage.setItem(`team-logo-${team}-game${game}`, e.target.result);
-                    document.getElementById(`logo${team}-game${game}`).src = e.target.result;
-                };
-                reader.readAsDataURL(file);
-            }
-        }
+  <button id="increase-home">Increase Home</button>
+  <button id="decrease-home">Decrease Home</button>
+  <button id="increase-away">Increase Away</button>
+  <button id="decrease-away">Decrease Away</button>
 
-        function updateTeamName(game, team, name) {
-            localStorage.setItem(`team-name-${team}-game${game}`, name);
-        }
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js"></script>
 
-        function updateScore(game, team, score) {
-            localStorage.setItem(`team-score-${team}-game${game}`, score);
-        }
+  <script>
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyBnHWRcCF4P8aneCbpKPWj3picLajwjEJA",
+      authDomain: "efaf-scoreborad.firebaseapp.com",
+      databaseURL: "https://efaf-scoreborad-default-rtdb.firebaseio.com",
+      projectId: "efaf-scoreborad",
+      storageBucket: "efaf-scoreborad.firebasestorage.app",
+      messagingSenderId: "422493280611",
+      appId: "1:422493280611:web:76bff49b2ed92464b2db56",
+      measurementId: "G-2P220TFGL6"
+    };
 
-        function adjustScore(game, team, points) {
-            const scoreElement = document.getElementById(`score${team}-game${game}`);
-            let score = parseInt(scoreElement.value) + points;
-            scoreElement.value = score;
-            updateScore(game, team, score);
-        }
+    // Initialize Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
 
-        function resetScore(game, team) {
-            document.getElementById(`score${team}-game${game}`).value = 0;
-            updateScore(game, team, 0);
-        }
+    // Reference to the score in the database
+    const scoreRef = database.ref('score');
 
-        function uploadBackground() {
-            const file = document.getElementById('backgroundUpload').files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    document.body.style.backgroundImage = `url(${e.target.result})`;
-                    localStorage.setItem('background-image', e.target.result);
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        function clearBackground() {
-            document.body.style.backgroundImage = '';
-            localStorage.removeItem('background-image');
-        }
-
-        window.addEventListener('load', () => {
-            for (let game = 1; game <= 3; game++) {
-                for (let team = 1; team <= 2; team++) {
-                    const logo = localStorage.getItem(`team-logo-${team}-game${game}`);
-                    if (logo) {
-                        document.getElementById(`logo${team}-game${game}`).src = logo;
-                    }
-                    const name = localStorage.getItem(`team-name-${team}-game${game}`);
-                    if (name) {
-                        document.getElementById(`name${team}-game${game}`).value = name;
-                    }
-                    const score = localStorage.getItem(`team-score-${team}-game${game}`);
-                    if (score) {
-                        document.getElementById(`score${team}-game${game}`).value = score;
-                    }
-                }
-            }
-            const background = localStorage.getItem('background-image');
-            if (background) {
-                document.body.style.backgroundImage = `url(${background})`;
-            }
-        });
- // Update these functions to match scoreboard's key pattern
-    function updateTeamName(game, team, name) {
-        localStorage.setItem(`name-${team}-${game}`, name);
-        window.dispatchEvent(new Event('storage'));
+    // Function to update the UI when the score changes
+    function updateScore(newScore) {
+      document.getElementById('home-score').textContent = newScore.home || 0;
+      document.getElementById('away-score').textContent = newScore.away || 0;
     }
 
-    function updateScore(game, team, score) {
-        localStorage.setItem(`score-${team}-${game}`, score);
-        window.dispatchEvent(new Event('storage'));
-    }
-
-    function adjustScore(game, team, points) {
-        const scoreElement = document.getElementById(`score${team}-game${game}`);
-        let score = parseInt(scoreElement.value) + points;
-        scoreElement.value = score;
-        updateScore(game, team, score);
-    }
-
-    function resetScore(game, team) {
-        document.getElementById(`score${team}-game${game}`).value = 0;
-        updateScore(game, team, 0);
-    }
-
-    // Update background storage key to match scoreboard
-    function uploadBackground() {
-        const file = document.getElementById('backgroundUpload').files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                document.body.style.backgroundImage = `url(${e.target.result})`;
-                localStorage.setItem('scoreboard-background', e.target.result);
-            };
-            reader.readAsDataURL(file);
-        }
-    }
-
-    window.addEventListener('load', () => {
-        // Load existing data with correct key pattern
-        for (let game = 1; game <= 3; game++) {
-            for (let team = 1; team <= 2; team++) {
-                const logo = localStorage.getItem(`team-logo-${team}-game${game}`);
-                if (logo) {
-                    document.getElementById(`logo${team}-game${game}`).src = logo;
-                }
-                const name = localStorage.getItem(`name-${team}-${game}`);
-                if (name) {
-                    document.getElementById(`name${team}-game${game}`).value = name;
-                }
-                const score = localStorage.getItem(`score-${team}-${game}`);
-                if (score) {
-                    document.getElementById(`score${team}-game${game}`).value = score;
-                }
-            }
-        }
-        const background = localStorage.getItem('scoreboard-background');
-        if (background) {
-            document.body.style.backgroundImage = `url(${background})`;
-        }
+    // Listen for changes in the database
+    scoreRef.on('value', (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        updateScore(data);
+      }
     });
-    </script>
+
+    // Function to update the score in the database
+    function updateScoreInDatabase(home, away) {
+      scoreRef.set({ home, away });
+    }
+
+    // Buttons to increase/decrease scores
+    document.getElementById('increase-home').addEventListener('click', () => {
+      const currentScore = (scoreRef.once('value').then(snapshot => snapshot.val()) || { home: 0, away: 0 });
+      updateScoreInDatabase((currentScore.home || 0) + 1, currentScore.away || 0);
+    });
+
+    document.getElementById('decrease-home').addEventListener('click', () => {
+      const currentScore = (scoreRef.once('value').then(snapshot => snapshot.val()) || { home: 0, away: 0 });
+      updateScoreInDatabase(Math.max((currentScore.home || 0) - 1, 0), currentScore.away || 0);
+    });
+
+    document.getElementById('increase-away').addEventListener('click', () => {
+      const currentScore = (scoreRef.once('value').then(snapshot => snapshot.val()) || { home: 0, away: 0 });
+      updateScoreInDatabase(currentScore.home || 0, (currentScore.away || 0) + 1);
+    });
+
+    document.getElementById('decrease-away').addEventListener('click', () => {
+      const currentScore = (scoreRef.once('value').then(snapshot => snapshot.val()) || { home: 0, away: 0 });
+      updateScoreInDatabase(currentScore.home || 0, Math.max((currentScore.away || 0) - 1, 0));
+    });
+
+    // Set initial score
+    scoreRef.once('value').then(snapshot => {
+      const data = snapshot.val();
+      if (!data) {
+        updateScoreInDatabase(0, 0);
+      }
+    });
+  </script>
 </body>
 </html>
