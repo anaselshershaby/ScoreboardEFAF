@@ -98,7 +98,7 @@
 <body>
     <div class="dashboard-container">
         <h1>Score Control Dashboard</h1>
-       <a href="scoreboard.html" target="_blank" style="color: white; text-decoration: none; font-size: 18px;">View Scoreboard</a>
+        <a href="scoreboard.html" target="_blank" style="color: white; text-decoration: none; font-size: 18px;">View Scoreboard</a>
 
         <div class="upload-container">
             <label for="backgroundUpload">Upload Background:</label>
@@ -274,7 +274,8 @@
             document.body.style.backgroundImage = `url(${background})`;
         }
     });
-         <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    </script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
 <script>
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
@@ -288,9 +289,8 @@ const firebaseConfig = {
   appId: "1:422493280611:web:76bff49b2ed92464b2db56",
   measurementId: "G-2P220TFGL6"
 };
-    const app = firebase.initializeApp(firebaseConfig);
+const app = firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
-    </script>
-   
+</script>
 </body>
 </html>
