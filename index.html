@@ -105,6 +105,203 @@
             <input type="file" id="backgroundUpload" accept="image/*" onchange="uploadBackground()">
             <button onclick="clearBackground()" class="reset-button">Clear Background</button>
         </div>
+        <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
+    <script>
+        function uploadTeamLogo(game, team) {
+            const file = document.getElementById(`logo${team}-upload-game${game}`).files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    localStorage.setItem(`team-logo-${team}-game${game}`, e.target.result);
+                    document.getElementById(`logo${team}-game${game}`).src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function updateTeamName(game, team, name) {
+            localStorage.setItem(`team-name-${team}-game${game}`, name);
+        }
+
+        function updateScore(game, team, score) {
+            localStorage.setItem(`team-score-${team}-game${game}`, score);
+        }
+
+        function adjustScore(game, team, points) {
+            const scoreElement = document.getElementById(`score${team}-game${game}`);
+            let score = parseInt(scoreElement.value) + points;
+            scoreElement.value = score;
+            updateScore(game, team, score);
+        }
+
+        function resetScore(game, team) {
+            document.getElementById(`score${team}-game${game}`).value = 0;
+            updateScore(game, team, 0);
+        }
+
+        function uploadBackground() {
+            const file = document.getElementById('backgroundUpload').files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.body.style.backgroundImage = `url(${e.target.result})`;
+                    localStorage.setItem('background-image', e.target.result);
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function clearBackground() {
+            document.body.style.backgroundImage = '';
+            localStorage.removeItem('background-image');
+        }
+
+        window.addEventListener('load', () => {
+            for (let game = 1; game <= 3; game++) {
+                for (let team = 1; team <= 2; team++) {
+                    const logo = localStorage.getItem(`team-logo-${team}-game${game}`);
+                    if (logo) {
+                        document.getElementById(`logo${team}-game${game}`).src = logo;
+                    }
+                    const name = localStorage.getItem(`team-name-${team}-game${game}`);
+                    if (name) {
+                        document.getElementById(`name${team}-game${game}`).value = name;
+                    }
+                    const score = localStorage.getItem(`team-score-${team}-game${game}`);
+                    if (score) {
+                        document.getElementById(`score${team}-game${game}`).value = score;
+                    }
+                }
+            }
+            const background = localStorage.getItem('background-image');
+            if (background) {
+                document.body.style.backgroundImage = `url(${background})`;
+            }
+        });
+ // Update these functions to match scoreboard's key pattern
+    function updateTeamName(game, team, name) {
+        localStorage.setItem(`name-${team}-${game}`, name);
+        window.dispatchEvent(new Event('storage'));
+    }
+
+    function updateScore(game, team, score) {
+        localStorage.setItem(`score-${team}-${game}`, score);
+        window.dispatchEvent(new Event('storage'));
+    }
+
+    function adjustScore(game, team, points) {
+        const scoreElement = document.getElementById(`score${team}-game${game}`);
+        let score = parseInt(scoreElement.value) + points;
+        scoreElement.value = score;
+        updateScore(game, team, score);
+    }
+
+    function resetScore(game, team) {
+        document.getElementById(`score${team}-game${game}`).value = 0;
+        updateScore(game, team, 0);
+    }
+
+    // Update background storage key to match scoreboard
+    function uploadBackground() {
+        const file = document.getElementById('backgroundUpload').files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.body.style.backgroundImage = `url(${e.target.result})`;
+                localStorage.setItem('scoreboard-background', e.target.result);
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    window.addEventListener('load', () => {
+        // Load existing data with correct key pattern
+        for (let game = 1; game <= 3; game++) {
+            for (let team = 1; team <= 2; team++) {
+                const logo = localStorage.getItem(`team-logo-${team}-game${game}`);
+                if (logo) {
+                    document.getElementById(`logo${team}-game${game}`).src = logo;
+                }
+                const name = localStorage.getItem(`name-${team}-${game}`);
+                if (name) {
+                    document.getElementById(`name${team}-game${game}`).value = name;
+                }
+                const score = localStorage.getItem(`score-${team}-${game}`);
+                if (score) {
+                    document.getElementById(`score${team}-game${game}`).value = score;
+                }
+            }
+        }
+        const background = localStorage.getItem('scoreboard-background');
+        if (background) {
+            document.body.style.backgroundImage = `url(${background})`;
+        }
+    });
+
+    </script>
+
+<script>
+    let peer;
+    let conn;
+
+    // Initialize PeerJS (host)
+    function initializeHost() {
+        const hostId = "dashboard-host"; // Unique ID for the host
+        peer = new Peer(hostId);
+
+        peer.on("open", (id) => {
+            console.log("Host ID:", id);
+        });
+
+        // Listen for connections from peers
+        peer.on("connection", (connection) => {
+            conn = connection;
+            console.log("Scoreboard connected:", connection.peer);
+
+            // Send initial data to the scoreboard
+            conn.send({ type: "init", data: getCurrentData() });
+
+            // Listen for messages from the scoreboard
+            conn.on("data", (data) => {
+                console.log("Received from scoreboard:", data);
+            });
+        });
+    }
+
+    // Send updates to the scoreboard
+    function sendUpdate(data) {
+        if (conn && conn.open) {
+            conn.send({ type: "update", data });
+        }
+    }
+
+    // Example: Update team name
+    function updateTeamName(game, team, name) {
+        const data = { game, team, name };
+        sendUpdate(data);
+    }
+
+    // Example: Update team score
+    function updateScore(game, team, score) {
+        const data = { game, team, score };
+        sendUpdate(data);
+    }
+
+    // Get current data (for initialization)
+    function getCurrentData() {
+        const data = {};
+        for (let game = 1; game <= 3; game++) {
+            for (let team = 1; team <= 2; team++) {
+                data[`name-${team}-${game}`] = document.getElementById(`name${team}-game${game}`).value;
+                data[`score-${team}-${game}`] = document.getElementById(`score${team}-game${game}`).value;
+            }
+        }
+        return data;
+    }
+
+    // Initialize the host when the page loads
+    window.addEventListener("load", initializeHost);
+
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
 <script>
