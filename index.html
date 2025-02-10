@@ -98,14 +98,50 @@
 <body>
     <div class="dashboard-container">
         <h1>Score Control Dashboard</h1>
-        <a href="scoreboard.html" target="_blank" style="color: white; text-decoration: none; font-size: 18px;">View Scoreboard</a>
-
         <div class="upload-container">
             <label for="backgroundUpload">Upload Background:</label>
             <input type="file" id="backgroundUpload" accept="image/*" onchange="uploadBackground()">
             <button onclick="clearBackground()" class="reset-button">Clear Background</button>
         </div>
-        <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
+
+        <script>
+            for (let game = 1; game <= 3; game++) {
+                document.write(`
+                    <div class="game-row">
+                        <div class="team-control">
+                            <div class="team-title">Home</div>
+                            <img id="logo1-game${game}" class="team-logo" src="" alt="Home Team Logo">
+                            <input type="file" id="logo1-upload-game${game}" accept="image/*" onchange="uploadTeamLogo(${game}, 1)">
+                            <input type="text" id="name1-game${game}" placeholder="Home Team ${game}" oninput="updateTeamName(${game}, 1, this.value)">
+                            <input type="number" id="score1-game${game}" value="0" oninput="updateScore(${game}, 1, this.value)">
+                            <div class="points-buttons">
+                                <button onclick="adjustScore(${game}, 1, 1)">+1</button>
+                                <button onclick="adjustScore(${game}, 1, 2)">+2</button>
+                                <button onclick="adjustScore(${game}, 1, 6)">+6</button>
+                            </div>
+                            <button class="reset-button" onclick="resetScore(${game}, 1)">Reset</button>
+                        </div>
+                        <h2>Game ${game}</h2>
+                        <div class="team-control">
+                            <div class="team-title">Away</div>
+                            <img id="logo2-game${game}" class="team-logo" src="" alt="Away Team Logo">
+                            <input type="file" id="logo2-upload-game${game}" accept="image/*" onchange="uploadTeamLogo(${game}, 2)">
+                            <input type="text" id="name2-game${game}" placeholder="Away Team ${game}" oninput="updateTeamName(${game}, 2, this.value)">
+                            <input type="number" id="score2-game${game}" value="0" oninput="updateScore(${game}, 2, this.value)">
+                            <div class="points-buttons">
+                                <button onclick="adjustScore(${game}, 2, 1)">+1</button>
+                                <button onclick="adjustScore(${game}, 2, 2)">+2</button>
+                                <button onclick="adjustScore(${game}, 2, 6)">+6</button>
+                            </div>
+                            <button class="reset-button" onclick="resetScore(${game}, 2)">Reset</button>
+                        </div>
+                    </div>
+                `);
+            }
+
+        </script>
+    </div>
+<script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
     <script>
         function uploadTeamLogo(game, team) {
             const file = document.getElementById(`logo${team}-upload-game${game}`).files[0];
@@ -301,106 +337,81 @@
 
     // Initialize the host when the page loads
     window.addEventListener("load", initializeHost);
-
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
+</script>
 <script>
-  // Firebase Configuration
-  const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com/",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
-  };
+    let peer;
+    let conn;
 
-  // Initialize Firebase
-  const app = firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
+    // Initialize PeerJS (peer)
+    function initializePeer() {
+        const peerId = "scoreboard-peer"; // Unique ID for the peer
+        peer = new Peer(peerId);
 
-  function uploadTeamLogo(game, team) {
-      const file = document.getElementById(`logo${team}-upload-game${game}`).files[0];
-      if (file) {
-          const reader = new FileReader();
-          reader.onload = function(e) {
-              db.ref(`games/game${game}/team${team}/logo`).set(e.target.result);
-          };
-          reader.readAsDataURL(file);
-      }
-  }
+        peer.on("open", (id) => {
+            console.log("Peer ID:", id);
+            connectToHost();
+        });
 
-  function updateTeamName(game, team, name) {
-      db.ref(`games/game${game}/team${team}/name`).set(name);
-  }
+        // Connect to the host
+        function connectToHost() {
+            const hostId = "dashboard-host"; // Host ID
+            conn = peer.connect(hostId);
 
-  function updateScore(game, team, score) {
-      db.ref(`games/game${game}/team${team}/score`).set(score);
-  }
+            conn.on("open", () => {
+                console.log("Connected to host:", hostId);
 
-  function adjustScore(game, team, points) {
-      let scoreRef = db.ref(`games/game${game}/team${team}/score`);
-      scoreRef.once("value").then(snapshot => {
-          let newScore = (snapshot.val() || 0) + points;
-          if (newScore < 0) newScore = 0;
-          scoreRef.set(newScore);
-      });
-  }
+                // Listen for messages from the host
+                conn.on("data", (data) => {
+                    if (data.type === "init") {
+                        // Initialize scoreboard with current data
+                        updateScoreboard(data.data);
+                    } else if (data.type === "update") {
+                        // Update specific data
+                        handleUpdate(data.data);
+                    }
+                });
+            });
+        }
+    }
 
-  function resetScore(game, team) {
-      db.ref(`games/game${game}/team${team}/score`).set(0);
-  }
+    // Update the scoreboard with new data
+    function updateScoreboard(data) {
+        for (let game = 1; game <= 3; game++) {
+            for (let team = 1; team <= 2; team++) {
+                document.getElementById(`name${team}-game${game}`).textContent = data[`name-${team}-${game}`] || `Team ${team} ${game}`;
+                document.getElementById(`score${team}-game${game}`).textContent = data[`score-${team}-${game}`] || 0;
+            }
+        }
+    }
 
-  function uploadBackground() {
-      const file = document.getElementById('backgroundUpload').files[0];
-      if (file) {
-          const reader = new FileReader();
-          reader.onload = function(e) {
-              db.ref('background-image').set(e.target.result);
-          };
-          reader.readAsDataURL(file);
-      }
-  }
+    // Handle updates from the host
+    function handleUpdate(data) {
+        if (data.game && data.team) {
+            if (data.name) {
+                document.getElementById(`name${data.team}-game${data.game}`).textContent = data.name;
+            }
+            if (data.score) {
+                document.getElementById(`score${data.team}-game${data.game}`).textContent = data.score;
+            }
+        }
+    }
 
-  function clearBackground() {
-      db.ref('background-image').remove();
-  }
+    // Initialize the peer when the page loads
+    window.addEventListener("load", initializePeer);
+</script>
+<script>
+function adjustScore(game, team, points) {
+    let scoreRef = db.ref(`games/game${game}/team${team}/score`);
+    scoreRef.once("value").then(snapshot => {
+        let newScore = (snapshot.val() || 0) + points;
+        if (newScore < 0) newScore = 0;
+        scoreRef.set(newScore);
+    });
+}
 
-  function syncDashboard() {
-      for (let game = 1; game <= 3; game++) {
-          for (let team = 1; team <= 2; team++) {
-              let scoreRef = db.ref(`games/game${game}/team${team}/score`);
-              let nameRef = db.ref(`games/game${game}/team${team}/name`);
-              let logoRef = db.ref(`games/game${game}/team${team}/logo`);
-
-              scoreRef.on("value", snapshot => {
-                  document.getElementById(`score${team}-game${game}`).value = snapshot.val() || 0;
-              });
-
-              nameRef.on("value", snapshot => {
-                  document.getElementById(`name${team}-game${game}`).value = snapshot.val() || `Team ${team}`;
-              });
-
-              logoRef.on("value", snapshot => {
-                  if (snapshot.val()) {
-                      document.getElementById(`logo${team}-game${game}`).src = snapshot.val();
-                  }
-              });
-          }
-      }
-
-      let backgroundRef = db.ref("background-image");
-      backgroundRef.on("value", snapshot => {
-          if (snapshot.val()) {
-              document.body.style.backgroundImage = `url(${snapshot.val()})`;
-          } else {
-              document.body.style.backgroundImage = '';
-          }
-      });
-  }
-
-  window.onload = syncDashboard;
+function updateTeamName(game, team, newName) {
+    db.ref(`games/game${game}/team${team}/name`).set(newName);
+}
 </script>
 
 </body>
