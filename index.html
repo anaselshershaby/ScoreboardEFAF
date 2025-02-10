@@ -3,175 +3,187 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Scoreboard Dashboard</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      margin-top: 50px;
-    }
-    button {
-      padding: 10px 20px;
-      margin: 10px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    #home-score, #away-score {
-      font-size: 24px;
-      margin: 20px;
-    }
-  </style>
+  <title>Score Control Dashboard</title>
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
 </head>
 <body>
   <h1>Score Control Dashboard</h1>
 
+  <!-- Game 1 -->
   <div>
-    <span id="home-score">0</span>
-    <span style="font-size: 24px;"> vs </span>
-    <span id="away-score">0</span>
+    <h2>Game 1</h2>
+    <!-- Team 1 -->
+    <div>
+      <h3>Team 1</h3>
+      <label for="logo1-upload-game1">Upload Logo:</label>
+      <input type="file" id="logo1-upload-game1" accept="image/*">
+      <button onclick="uploadTeamLogo(1, 1)">Upload</button>
+      <img id="logo1-game1" src="" alt="Team 1 Logo" width="100">
+
+      <label for="name1-game1">Team Name:</label>
+      <input type="text" id="name1-game1" placeholder="Enter team name">
+      <button onclick="updateTeamName(1, 1, document.getElementById('name1-game1').value)">Update Name</button>
+
+      <label for="score1-game1">Score:</label>
+      <input type="number" id="score1-game1" value="0">
+      <button onclick="adjustScore(1, 1, 1)">+1</button>
+      <button onclick="adjustScore(1, 1, -1)">-1</button>
+      <button onclick="resetScore(1, 1)">Reset</button>
+    </div>
+
+    <!-- Team 2 -->
+    <div>
+      <h3>Team 2</h3>
+      <label for="logo2-upload-game1">Upload Logo:</label>
+      <input type="file" id="logo2-upload-game1" accept="image/*">
+      <button onclick="uploadTeamLogo(1, 2)">Upload</button>
+      <img id="logo2-game1" src="" alt="Team 2 Logo" width="100">
+
+      <label for="name2-game1">Team Name:</label>
+      <input type="text" id="name2-game1" placeholder="Enter team name">
+      <button onclick="updateTeamName(1, 2, document.getElementById('name2-game1').value)">Update Name</button>
+
+      <label for="score2-game1">Score:</label>
+      <input type="number" id="score2-game1" value="0">
+      <button onclick="adjustScore(1, 2, 1)">+1</button>
+      <button onclick="adjustScore(1, 2, -1)">-1</button>
+      <button onclick="resetScore(1, 2)">Reset</button>
+    </div>
   </div>
 
-  <button id="increase-home">Increase Home</button>
-  <button id="decrease-home">Decrease Home</button>
-  <button id="increase-away">Increase Away</button>
-  <button id="decrease-away">Decrease Away</button>
+  <!-- Background Upload Section -->
+  <h2>Upload Background:</h2>
+  <input type="file" id="backgroundUpload" accept="image/*">
+  <button onclick="uploadBackground()">Upload</button>
+  <button onclick="clearBackground()">Clear Background</button>
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js"></script>
+  <!-- Firebase and Functionality Script -->
+  <script>
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyBnHWRcCF4P8aneCbpKPWj3picLajwjEJA",
+      authDomain: "efaf-scoreborad.firebaseapp.com",
+      databaseURL: "https://efaf-scoreborad-default-rtdb.firebaseio.com",
+      projectId: "efaf-scoreborad",
+      storageBucket: "efaf-scoreborad.firebasestorage.app",
+      messagingSenderId: "422493280611",
+      appId: "1:422493280611:web:76bff49b2ed92464b2db56",
+      measurementId: "G-2P220TFGL6"
+    };
 
-  // Firebase configuration
-const firebaseConfig = {
-    apiKey: "AIzaSyBnHWRcCF4P8aneCbpKPWj3picLajwjEJA",
-    authDomain: "efaf-scoreborad.firebaseapp.com",
-    databaseURL: "https://efaf-scoreborad-default-rtdb.firebaseio.com",
-    projectId: "efaf-scoreborad",
-    storageBucket: "efaf-scoreborad.firebasestorage.app",
-    messagingSenderId: "422493280611",
-    appId: "1:422493280611:web:76bff49b2ed92464b2db56",
-    measurementId: "G-2P220TFGL6"
-};
+    // Initialize Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
 
-// Initialize Firebase
-const app = firebase.initializeApp(firebaseConfig);
-const database = firebase.database();
-
-// Function to upload team logo (Firebase Storage integration can be added later)
-function uploadTeamLogo(game, team) {
-    const file = document.getElementById(`logo${team}-upload-game${game}`).files[0];
-    if (file) {
+    // Function to upload team logo
+    function uploadTeamLogo(game, team) {
+      const file = document.getElementById(`logo${team}-upload-game${game}`).files[0];
+      if (file) {
         const reader = new FileReader();
         reader.onload = function (e) {
-            // Store logo in Firebase under a specific path
-            const logoPath = `games/game${game}/team${team}/logo`;
-            database.ref(logoPath).set(e.target.result);
+          const logoPath = `games/game${game}/team${team}/logo`;
+          database.ref(logoPath).set(e.target.result);
 
-            // Update the displayed logo
-            document.getElementById(`logo${team}-game${game}`).src = e.target.result;
+          document.getElementById(`logo${team}-game${game}`).src = e.target.result;
         };
         reader.readAsDataURL(file);
+      }
     }
-}
 
-// Function to update team name
-function updateTeamName(game, team, name) {
-    const namePath = `games/game${game}/team${team}/name`;
-    database.ref(namePath).set(name);
-}
+    // Function to update team name
+    function updateTeamName(game, team, name) {
+      const namePath = `games/game${game}/team${team}/name`;
+      database.ref(namePath).set(name);
+    }
 
-// Function to update team score
-function updateScore(game, team, score) {
-    const scorePath = `games/game${game}/team${team}/score`;
-    database.ref(scorePath).set(score);
-}
+    // Function to update team score
+    function updateScore(game, team, score) {
+      const scorePath = `games/game${game}/team${team}/score`;
+      database.ref(scorePath).set(score);
+    }
 
-// Function to adjust team score
-function adjustScore(game, team, points) {
-    const scoreElement = document.getElementById(`score${team}-game${game}`);
-    let currentScore = parseInt(scoreElement.value || 0);
-    const newScore = currentScore + points;
+    // Function to adjust team score
+    function adjustScore(game, team, points) {
+      const scoreElement = document.getElementById(`score${team}-game${game}`);
+      let currentScore = parseInt(scoreElement.value || 0);
+      const newScore = currentScore + points;
 
-    scoreElement.value = newScore;
-    updateScore(game, team, newScore);
-}
+      scoreElement.value = newScore;
+      updateScore(game, team, newScore);
+    }
 
-// Function to reset team score
-function resetScore(game, team) {
-    document.getElementById(`score${team}-game${game}`).value = 0;
-    updateScore(game, team, 0);
-}
+    // Function to reset team score
+    function resetScore(game, team) {
+      document.getElementById(`score${team}-game${game}`).value = 0;
+      updateScore(game, team, 0);
+    }
 
-// Function to upload background image
-function uploadBackground() {
-    const file = document.getElementById('backgroundUpload').files[0];
-    if (file) {
+    // Function to upload background image
+    function uploadBackground() {
+      const file = document.getElementById('backgroundUpload').files[0];
+      if (file) {
         const reader = new FileReader();
         reader.onload = function (e) {
-            // Store background image in Firebase
-            const backgroundPath = `settings/background`;
-            database.ref(backgroundPath).set(e.target.result);
+          const backgroundPath = `settings/background`;
+          database.ref(backgroundPath).set(e.target.result);
 
-            // Apply the background image
-            document.body.style.backgroundImage = `url(${e.target.result})`;
+          document.body.style.backgroundImage = `url(${e.target.result})`;
         };
         reader.readAsDataURL(file);
+      }
     }
-}
 
-// Function to clear background image
-function clearBackground() {
-    const backgroundPath = `settings/background`;
-    database.ref(backgroundPath).remove(); // Remove from Firebase
+    // Function to clear background image
+    function clearBackground() {
+      const backgroundPath = `settings/background`;
+      database.ref(backgroundPath).remove();
 
-    // Clear the background image
-    document.body.style.backgroundImage = '';
-}
+      document.body.style.backgroundImage = '';
+    }
 
-// Load existing data from Firebase on page load
-window.addEventListener('load', () => {
-    // Listen for changes in team logos, names, and scores
-    for (let game = 1; game <= 3; game++) {
+    // Load existing data from Firebase on page load
+    window.addEventListener('load', () => {
+      for (let game = 1; game <= 1; game++) {
         for (let team = 1; team <= 2; team++) {
-            const logoPath = `games/game${game}/team${team}/logo`;
-            const namePath = `games/game${game}/team${team}/name`;
-            const scorePath = `games/game${game}/team${team}/score`;
+          const logoPath = `games/game${game}/team${team}/logo`;
+          const namePath = `games/game${game}/team${team}/name`;
+          const scorePath = `games/game${game}/team${team}/score`;
 
-            // Load and listen for logo updates
-            database.ref(logoPath).on('value', (snapshot) => {
-                const logo = snapshot.val();
-                if (logo) {
-                    document.getElementById(`logo${team}-game${game}`).src = logo;
-                }
-            });
+          database.ref(logoPath).on('value', (snapshot) => {
+            const logo = snapshot.val();
+            if (logo) {
+              document.getElementById(`logo${team}-game${game}`).src = logo;
+            }
+          });
 
-            // Load and listen for name updates
-            database.ref(namePath).on('value', (snapshot) => {
-                const name = snapshot.val();
-                if (name) {
-                    document.getElementById(`name${team}-game${game}`).value = name;
-                }
-            });
+          database.ref(namePath).on('value', (snapshot) => {
+            const name = snapshot.val();
+            if (name) {
+              document.getElementById(`name${team}-game${game}`).value = name;
+            }
+          });
 
-            // Load and listen for score updates
-            database.ref(scorePath).on('value', (snapshot) => {
-                const score = snapshot.val();
-                if (score !== null) {
-                    document.getElementById(`score${team}-game${game}`).value = score;
-                }
-            });
+          database.ref(scorePath).on('value', (snapshot) => {
+            const score = snapshot.val();
+            if (score !== null) {
+              document.getElementById(`score${team}-game${game}`).value = score;
+            }
+          });
         }
-    }
+      }
 
-    // Load and listen for background image updates
-    const backgroundPath = `settings/background`;
-    database.ref(backgroundPath).on('value', (snapshot) => {
+      const backgroundPath = `settings/background`;
+      database.ref(backgroundPath).on('value', (snapshot) => {
         const background = snapshot.val();
         if (background) {
-            document.body.style.backgroundImage = `url(${background})`;
+          document.body.style.backgroundImage = `url(${background})`;
         } else {
-            document.body.style.backgroundImage = '';
+          document.body.style.backgroundImage = '';
         }
+      });
     });
-});
+  </script>
 </body>
 </html>
