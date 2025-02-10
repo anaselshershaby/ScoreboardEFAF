@@ -1,21 +1,95 @@
-<!-- dashboard.html -->
+<!-- display.html -->
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Firebase Score Dashboard</title>
+    <title>Live Score Display</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=College&family=Varsity+Team&display=swap">
-    <!-- Add Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.0.2/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.2/firebase-database.js"></script>
     <style>
-        /* [Keep all previous CSS styles unchanged] */
+        :root {
+            --sports-font: 'Varsity Team', 'College', Impact, sans-serif;
+        }
+
+        body {
+            font-family: var(--sports-font);
+            margin: 0;
+            padding: 20px;
+            background-size: cover;
+            background-position: center;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .scoreboard-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+
+        .game-card {
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 20px;
+            padding: 25px;
+            border: 3px solid gold;
+        }
+
+        .teams-container {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin: 20px 0;
+        }
+
+        .team-display {
+            text-align: center;
+            flex: 1;
+        }
+
+        .team-logo {
+            width: 150px;
+            height: 150px;
+            object-fit: contain;
+            margin-bottom: 15px;
+        }
+
+        .team-name {
+            font-size: 2.5em;
+            margin: 10px 0;
+        }
+
+        .score {
+            font-size: 4em;
+            color: gold;
+            margin: 15px 0;
+            transition: all 0.3s ease;
+        }
+
+        .game-title {
+            text-align: center;
+            font-size: 2em;
+            color: #1E90FF;
+            margin-bottom: 20px;
+        }
+
+        @keyframes scoreUpdate {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .score-update {
+            animation: scoreUpdate 0.5s ease;
+        }
     </style>
 </head>
 <body>
-    <!-- [Keep all previous HTML structure unchanged] -->
+    <div class="scoreboard-container" id="scoreboard"></div>
 
     <script>
-        // Your Firebase config (replace with your actual config)
+        // Firebase Configuration (must match control dashboard)
         const firebaseConfig = {
             apiKey: "YOUR_API_KEY",
             authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
@@ -31,129 +105,83 @@
         const db = firebase.database();
         const scoreboardRef = db.ref('scoreboard');
 
-        // Firebase-connected functions
-        function createGameElements() {
-            /* [Keep previous createGameElements implementation unchanged] */
+        function createScoreboard() {
+            const container = document.getElementById('scoreboard');
+            
+            // Create game cards
+            for (let game = 1; game <= 3; game++) {
+                const gameCard = document.createElement('div');
+                gameCard.className = 'game-card';
+                gameCard.innerHTML = `
+                    <div class="game-title">GAME ${game}</div>
+                    <div class="teams-container">
+                        ${createTeamDisplay(game, 1)}
+                        <div class="vs">VS</div>
+                        ${createTeamDisplay(game, 2)}
+                    </div>
+                `;
+                container.appendChild(gameCard);
+            }
         }
 
-        function createTeamControl(game, team) {
-            /* [Keep previous createTeamControl implementation unchanged] */
+        function createTeamDisplay(game, team) {
+            return `
+                <div class="team-display" data-game="${game}" data-team="${team}">
+                    <img class="team-logo" alt="Team Logo">
+                    <div class="team-name"></div>
+                    <div class="score">0</div>
+                </div>
+            `;
         }
 
-        // Real-time Database Handlers
-        function setupFirebaseListeners() {
-            // Listen for score changes
+        function updateDisplay(data) {
+            // Update background
+            if (data?.background) {
+                document.body.style.backgroundImage = `url(${data.background})`;
+            }
+
+            // Update game data
+            for (let game = 1; game <= 3; game++) {
+                const gameData = data[`game${game}`] || {};
+                for (let team = 1; team <= 2; team++) {
+                    const teamData = gameData[`team${team}`] || {};
+                    const teamDisplay = document.querySelector(
+                        `.team-display[data-game="${game}"][data-team="${team}"]`
+                    );
+
+                    if (teamDisplay) {
+                        // Update logo
+                        const logo = teamDisplay.querySelector('.team-logo');
+                        if (teamData.logo && logo.src !== teamData.logo) {
+                            logo.src = teamData.logo;
+                        }
+
+                        // Update name
+                        const nameElement = teamDisplay.querySelector('.team-name');
+                        if (nameElement.textContent !== teamData.name) {
+                            nameElement.textContent = teamData.name || `Team ${team}`;
+                        }
+
+                        // Update score
+                        const scoreElement = teamDisplay.querySelector('.score');
+                        if (scoreElement.textContent !== String(teamData.score || 0)) {
+                            scoreElement.classList.add('score-update');
+                            setTimeout(() => scoreElement.classList.remove('score-update'), 500);
+                            scoreElement.textContent = teamData.score || 0;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            createScoreboard();
+
+            // Real-time updates
             scoreboardRef.on('value', (snapshot) => {
                 const data = snapshot.val() || {};
-                this.syncFromFirebase(data);
-            });
-        }
-
-        function syncFromFirebase(data) {
-            // Update team names and scores
-            document.querySelectorAll('.team-name, .team-score').forEach(input => {
-                const { game, team } = input.dataset;
-                const type = input.classList.contains('team-name') ? 'name' : 'score';
-                const value = data?.[`game${game}`]?.[`team${team}`]?.[type] || '';
-                if (input.value !== value) input.value = value;
-            });
-
-            // Update team logos
-            document.querySelectorAll('.team-logo').forEach(img => {
-                const [_, team, game] = img.id.split('-');
-                const logo = data?.[`game${game}`]?.[`team${team}`]?.logo || '';
-                if (img.src !== logo) img.src = logo;
-            });
-
-            // Update background
-            const background = data?.background || '';
-            if (document.body.style.backgroundImage !== `url(${background})`) {
-                document.body.style.backgroundImage = background ? `url(${background})` : '';
-            }
-        }
-
-        async function updateFirebase(path, value) {
-            try {
-                await db.ref(path).set(value);
-            } catch (error) {
-                console.error('Firebase update failed:', error);
-            }
-        }
-
-        // Modified Event Handlers
-        async function handleLogoUpload(e) {
-            const { game, team } = e.target.dataset;
-            const file = e.target.files[0];
-            
-            if (!file?.type.startsWith('image/')) {
-                alert('Please upload an image file');
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = async (event) => {
-                const logoPath = `game${game}/team${team}/logo`;
-                await updateFirebase(logoPath, event.target.result);
-            };
-            reader.readAsDataURL(file);
-        }
-
-        async function handleScoreAdjust(e) {
-            const points = parseInt(e.target.dataset.points);
-            const scoreInput = e.target.closest('.points-buttons').previousElementSibling;
-            const { game, team } = scoreInput.dataset;
-            
-            const newScore = Math.max(0, parseInt(scoreInput.value) + points;
-            await updateFirebase(`game${game}/team${team}/score`, newScore);
-        }
-
-        async function handleReset(e) {
-            const scoreInput = e.target.previousElementSibling.querySelector('.team-score');
-            const { game, team } = scoreInput.dataset;
-            await updateFirebase(`game${game}/team${team}/score`, 0);
-        }
-
-        // Modified Background Handling
-        document.getElementById('backgroundUpload').addEventListener('change', async function(e) {
-            const file = e.target.files[0];
-            if (!file?.type.startsWith('image/')) {
-                alert('Please upload an image file');
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = async (event) => {
-                await updateFirebase('background', event.target.result);
-            };
-            reader.readAsDataURL(file);
-        });
-
-        async function clearBackground() {
-            await updateFirebase('background', '');
-        }
-
-        // Initialize Application
-        document.addEventListener('DOMContentLoaded', () => {
-            createGameElements();
-            setupFirebaseListeners();
-            
-            // Event Delegation (keep previous implementation unchanged)
-            document.addEventListener('change', e => {
-                if (e.target.matches('.logo-upload')) handleLogoUpload(e);
-                if (e.target.matches('.team-name')) {
-                    const { game, team } = e.target.dataset;
-                    updateFirebase(`game${game}/team${team}/name`, e.target.value);
-                }
-                if (e.target.matches('.team-score')) {
-                    const { game, team } = e.target.dataset;
-                    const value = Math.max(0, parseInt(e.target.value) || 0);
-                    updateFirebase(`game${game}/team${team}/score`, value);
-                }
-            });
-
-            document.addEventListener('click', e => {
-                if (e.target.matches('.points-buttons button')) handleScoreAdjust(e);
-                if (e.target.matches('.reset-button')) handleReset(e);
+                updateDisplay(data);
             });
         });
     </script>
