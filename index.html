@@ -4,13 +4,17 @@
 <head>
     <title>Control Dashboard</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=College&family=Varsity+Team&display=swap">
+    <script src="https://www.gstatic.com/firebasejs/9.0.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.2/firebase-database-compat.js"></script>
     <style>
+        /* Keep all your original CSS styles */
         :root {
-            --college-font: 'Varsity Team', 'College', Impact, sans-serif;
+            --sports-font: 'Varsity Team', 'College', Impact, Haettenschweiler, 
+                          'Arial Narrow Bold', sans-serif;
         }
 
         body {
-            font-family: var(--college-font);
+            font-family: var(--sports-font);
             background: #2F4F4F;
             color: white;
             text-align: center;
@@ -44,105 +48,98 @@
             border-radius: 8px;
             text-align: center;
             flex: 1;
+            margin: 0 10px;
         }
 
         .team-title {
             font-size: 24px;
             font-weight: bold;
+            margin-bottom: 10px;
         }
 
-        input[type="text"], input[type="number"] {
-            font-family: var(--college-font);
+        .team-logo {
+            width: 80px;
+            height: 80px;
+            margin: 10px 0;
+            object-fit: contain;
+            border: 2px solid white;
+            border-radius: 8px;
+        }
+
+        .logo-upload {
+            margin: 10px 0;
+            display: block;
+            width: 100%;
+        }
+
+        .team-name {
             font-size: 20px;
             width: 80%;
             padding: 8px;
-            margin: 5px 0;
+            margin: 10px 0;
             border: 2px solid white;
             border-radius: 5px;
-            text-align: center;
+            background: #555;
+            color: white;
         }
 
-        .points-buttons button, .reset-button {
-            font-family: var(--college-font);
-            font-size: 18px;
-            padding: 8px 15px;
+        .team-score {
+            font-size: 32px;
+            width: 100px;
+            padding: 10px;
+            margin: 15px 0;
+            border: 3px solid gold;
+            border-radius: 8px;
+            background: #222;
+            color: white;
+        }
+
+        .points-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin: 15px 0;
+        }
+
+        .points-buttons button {
+            font-size: 20px;
+            padding: 10px 20px;
             background: #1E90FF;
             border: none;
-            border-radius: 8px;
-            margin: 5px;
+            border-radius: 5px;
             cursor: pointer;
         }
 
         .reset-button {
-            background: #FF4500;
+            background: #FF4500 !important;
+            margin-top: 10px;
         }
 
         .upload-container {
-            margin-bottom: 20px;
+            margin-bottom: 30px;
+            padding: 15px;
+            background: #444;
+            border-radius: 8px;
         }
 
-        .upload-container input {
-            padding: 10px;
-            border-radius: 5px;
-            background: white;
-            color: black;
-        }
-
-        .team-logo {
-            width: 50px;
-            height: 50px;
-            margin-bottom: 10px;
+        #backgroundUpload {
+            margin: 0 10px;
         }
     </style>
 </head>
 <body>
     <div class="dashboard-container">
-        <h1>Score Control Dashboard</h1>
+        <h1>🏆 Score Control Dashboard 🏆</h1>
         <div class="upload-container">
             <label for="backgroundUpload">Upload Background:</label>
-            <input type="file" id="backgroundUpload" accept="image/*" onchange="uploadBackground()">
-            <button onclick="clearBackground()" class="reset-button">Clear Background</button>
+            <input type="file" id="backgroundUpload" accept="image/*">
+            <button class="reset-button">Clear Background</button>
         </div>
-
-        <script>
-            for (let game = 1; game <= 3; game++) {
-                document.write(`
-                    <div class="game-row">
-                        <div class="team-control">
-                            <div class="team-title">Home</div>
-                            <img id="logo1-game${game}" class="team-logo" src="" alt="Home Team Logo">
-                            <input type="file" id="logo1-upload-game${game}" accept="image/*" onchange="uploadTeamLogo(${game}, 1)">
-                            <input type="text" id="name1-game${game}" placeholder="Home Team ${game}" oninput="updateTeamName(${game}, 1, this.value)">
-                            <input type="number" id="score1-game${game}" value="0" oninput="updateScore(${game}, 1, this.value)">
-                            <div class="points-buttons">
-                                <button onclick="adjustScore(${game}, 1, 1)">+1</button>
-                                <button onclick="adjustScore(${game}, 1, 2)">+2</button>
-                                <button onclick="adjustScore(${game}, 1, 6)">+6</button>
-                            </div>
-                            <button class="reset-button" onclick="resetScore(${game}, 1)">Reset</button>
-                        </div>
-                        <h2>Game ${game}</h2>
-                        <div class="team-control">
-                            <div class="team-title">Away</div>
-                            <img id="logo2-game${game}" class="team-logo" src="" alt="Away Team Logo">
-                            <input type="file" id="logo2-upload-game${game}" accept="image/*" onchange="uploadTeamLogo(${game}, 2)">
-                            <input type="text" id="name2-game${game}" placeholder="Away Team ${game}" oninput="updateTeamName(${game}, 2, this.value)">
-                            <input type="number" id="score2-game${game}" value="0" oninput="updateScore(${game}, 2, this.value)">
-                            <div class="points-buttons">
-                                <button onclick="adjustScore(${game}, 2, 1)">+1</button>
-                                <button onclick="adjustScore(${game}, 2, 2)">+2</button>
-                                <button onclick="adjustScore(${game}, 2, 6)">+6</button>
-                            </div>
-                            <button class="reset-button" onclick="resetScore(${game}, 2)">Reset</button>
-                        </div>
-                    </div>
-                `);
-            }
-        </script>
+        <div id="games-container"></div>
     </div>
 
-   <script>
-        // Firebase configuration (replace with your actual values)
+    <script>
+        // Firebase Configuration - REPLACE WITH YOUR VALUES
         const firebaseConfig = {
             apiKey: "YOUR_API_KEY",
             authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
@@ -158,182 +155,166 @@
         const db = firebase.database();
         const scoreboardRef = db.ref('scoreboard');
 
-        // Modified Storage Management for Firebase
-        function getFirebasePath(game, team, type) {
-            return `game${game}/team${team}/${type}`;
+        function createGameElements() {
+            const container = document.getElementById('games-container');
+            container.innerHTML = '';
+            
+            for (let game = 1; game <= 3; game++) {
+                const gameRow = document.createElement('div');
+                gameRow.className = 'game-row';
+                gameRow.innerHTML = `
+                    ${createTeamControl(game, 1)}
+                    <h2>Game ${game}</h2>
+                    ${createTeamControl(game, 2)}
+                `;
+                container.appendChild(gameRow);
+            }
         }
 
-        // Modified Event Handlers for Firebase
-        async function handleLogoUpload(e) {
-            const { game, team } = e.target.dataset;
-            const file = e.target.files[0];
+        function createTeamControl(game, team) {
+            return `
+                <div class="team-control">
+                    <div class="team-title">${team === 1 ? 'Home' : 'Away'}</div>
+                    <img class="team-logo" data-game="${game}" data-team="${team}">
+                    <input type="file" class="logo-upload" data-game="${game}" data-team="${team}" accept="image/*">
+                    <input type="text" class="team-name" data-game="${game}" data-team="${team}" placeholder="${team === 1 ? 'Home' : 'Away'} Team">
+                    <input type="number" class="team-score" data-game="${game}" data-team="${team}" value="0" min="0">
+                    <div class="points-buttons">
+                        <button data-points="1">+1</button>
+                        <button data-points="2">+2</button>
+                        <button data-points="6">+6</button>
+                    </div>
+                    <button class="reset-button" data-game="${game}" data-team="${team}">Reset Score</button>
+                </div>
+            `;
+        }
+
+        // Event Handlers
+        async function handleLogoUpload(event) {
+            const { game, team } = event.target.dataset;
+            const file = event.target.files[0];
             
             if (!file?.type.startsWith('image/')) {
                 alert('Please upload an image file');
                 return;
             }
 
-            const reader = new FileReader();
-            reader.onload = async (event) => {
-                const path = getFirebasePath(game, team, 'logo');
-                await db.ref(path).set(event.target.result);
-            };
-            reader.readAsDataURL(file);
+            try {
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    await db.ref(`game${game}/team${team}/logo`).set(e.target.result);
+                };
+                reader.readAsDataURL(file);
+            } catch (error) {
+                console.error('Logo upload failed:', error);
+            }
         }
 
-        async function handleScoreAdjust(e) {
-            const points = parseInt(e.target.dataset.points);
-            const scoreInput = e.target.closest('.points-buttons').previousElementSibling;
+        async function handleScoreAdjust(event) {
+            const points = parseInt(event.target.dataset.points);
+            const scoreInput = event.target.closest('.points-buttons').previousElementSibling;
             const { game, team } = scoreInput.dataset;
             
-            const newScore = Math.max(0, parseInt(scoreInput.value) + points);
-            const path = getFirebasePath(game, team, 'score');
-            await db.ref(path).set(newScore);
-        }
-
-        async function handleReset(e) {
-            const scoreInput = e.target.previousElementSibling.querySelector('.team-score');
-            const { game, team } = scoreInput.dataset;
-            const path = getFirebasePath(game, team, 'score');
-            await db.ref(path).set(0);
-        }
-
-        // Modified Background Handling
-        document.getElementById('backgroundUpload').addEventListener('change', async function(e) {
-            const file = e.target.files[0];
-            if (!file?.type.startsWith('image/')) {
-                alert('Please upload an image file');
-                return;
+            try {
+                const currentScore = parseInt(scoreInput.value) || 0;
+                const newScore = Math.max(0, currentScore + points);
+                await db.ref(`game${game}/team${team}/score`).set(newScore);
+            } catch (error) {
+                console.error('Score adjustment failed:', error);
             }
-
-            const reader = new FileReader();
-            reader.onload = async (event) => {
-                await db.ref('background').set(event.target.result);
-            };
-            reader.readAsDataURL(file);
-        });
-
-        async function clearBackground() {
-            await db.ref('background').set('');
         }
 
-        // Real-time Sync from Firebase
+        async function handleResetScore(event) {
+            const { game, team } = event.target.dataset;
+            try {
+                await db.ref(`game${game}/team${team}/score`).set(0);
+            } catch (error) {
+                console.error('Score reset failed:', error);
+            }
+        }
+
+        async function handleBackgroundUpload(event) {
+            const file = event.target.files[0];
+            if (!file?.type.startsWith('image/')) return;
+
+            try {
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    await db.ref('background').set(e.target.result);
+                };
+                reader.readAsDataURL(file);
+            } catch (error) {
+                console.error('Background upload failed:', error);
+            }
+        }
+
+        async function handleClearBackground() {
+            try {
+                await db.ref('background').set('');
+            } catch (error) {
+                console.error('Clear background failed:', error);
+            }
+        }
+
+        // Real-time Updates
         function setupFirebaseListeners() {
-            // Listen for all scoreboard changes
             scoreboardRef.on('value', (snapshot) => {
                 const data = snapshot.val() || {};
-                syncFromFirebase(data);
+                
+                // Update team names
+                document.querySelectorAll('.team-name').forEach(input => {
+                    const { game, team } = input.dataset;
+                    input.value = data[`game${game}`]?.[`team${team}`]?.name || '';
+                });
+
+                // Update scores
+                document.querySelectorAll('.team-score').forEach(input => {
+                    const { game, team } = input.dataset;
+                    input.value = data[`game${game}`]?.[`team${team}`]?.score || 0;
+                });
+
+                // Update logos
+                document.querySelectorAll('.team-logo').forEach(img => {
+                    const { game, team } = img.dataset;
+                    img.src = data[`game${game}`]?.[`team${team}`]?.logo || '';
+                });
+
+                // Update background
+                if (data.background) {
+                    document.body.style.backgroundImage = `url(${data.background})`;
+                }
             });
         }
 
-        function syncFromFirebase(data) {
-            // Update team names
-            document.querySelectorAll('.team-name').forEach(input => {
-                const { game, team } = input.dataset;
-                const value = data?.[`game${game}`]?.[`team${team}`]?.name || '';
-                if (input.value !== value) input.value = value;
-            });
-
-            // Update scores
-            document.querySelectorAll('.team-score').forEach(input => {
-                const { game, team } = input.dataset;
-                const value = data?.[`game${game}`]?.[`team${team}`]?.score || 0;
-                if (input.value !== value.toString()) input.value = value;
-            });
-
-            // Update logos
-            document.querySelectorAll('.team-logo').forEach(img => {
-                const [_, team, game] = img.id.split('-');
-                const logo = data?.[`game${game}`]?.[`team${team}`]?.logo || '';
-                if (img.src !== logo) img.src = logo;
-            });
-
-            // Update background
-            const background = data?.background || '';
-            if (document.body.style.backgroundImage !== `url(${background})`) {
-                document.body.style.backgroundImage = background ? `url(${background})` : '';
-            }
-        }
-
-        // Initialize Application
+        // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             createGameElements();
             setupFirebaseListeners();
-            
-            // Modified Event Delegation with proper async handling
-document.addEventListener('click', async (e) => {
-    try {
-        // Handle score adjustment buttons
-        if (e.target.matches('.points-buttons button')) {
-            const points = parseInt(e.target.dataset.points);
-            const scoreInput = e.target.closest('.points-buttons').previousElementSibling;
-            const { game, team } = scoreInput.dataset;
-            
-            // Calculate new score
-            const currentScore = parseInt(scoreInput.value) || 0;
-            const newScore = Math.max(0, currentScore + points);
-            
-            // Update Firebase
-            await db.ref(`game${game}/team${team}/score`).set(newScore);
-        }
 
-        // Handle reset buttons
-        if (e.target.matches('.reset-button')) {
-            const scoreInput = e.target.previousElementSibling.querySelector('.team-score');
-            const { game, team } = scoreInput.dataset;
-            
-            // Update Firebase
-            await db.ref(`game${game}/team${team}/score`).set(0);
-        }
-    } catch (error) {
-        console.error('Button action failed:', error);
-        alert('Operation failed. Check console for details.');
-    }
-});
+            // Event Listeners
+            document.addEventListener('change', (event) => {
+                if (event.target.matches('.logo-upload')) handleLogoUpload(event);
+                if (event.target.matches('#backgroundUpload')) handleBackgroundUpload(event);
+            });
 
-// Enhanced Sync Function
-function syncFromFirebase(data) {
-    try {
-        // Update scores
-        document.querySelectorAll('.team-score').forEach(input => {
-            const { game, team } = input.dataset;
-            const value = data?.[`game${game}`]?.[`team${team}`]?.score || 0;
-            if (input.value !== value.toString()) {
-                input.value = value;
-            }
+            document.addEventListener('input', (event) => {
+                if (event.target.matches('.team-name')) {
+                    const { game, team } = event.target.dataset;
+                    db.ref(`game${game}/team${team}/name`).set(event.target.value);
+                }
+                if (event.target.matches('.team-score')) {
+                    const { game, team } = event.target.dataset;
+                    const value = Math.max(0, parseInt(event.target.value) || 0);
+                    db.ref(`game${game}/team${team}/score`).set(value);
+                }
+            });
+
+            document.addEventListener('click', (event) => {
+                if (event.target.matches('.points-buttons button')) handleScoreAdjust(event);
+                if (event.target.matches('.reset-button')) handleResetScore(event);
+                if (event.target.matches('.reset-button')) handleClearBackground();
+            });
         });
-
-        // Update other elements... (keep existing code)
-        
-    } catch (error) {
-        console.error('Sync error:', error);
-    }
-}
-
-// Initialize with error handling
-document.addEventListener('DOMContentLoaded', () => {
-    try {
-        createGameElements();
-        setupFirebaseListeners();
-        
-        // Event listeners for input fields
-        document.addEventListener('input', async (e) => {
-            if (e.target.matches('.team-name')) {
-                const { game, team } = e.target.dataset;
-                await db.ref(`game${game}/team${team}/name`).set(e.target.value);
-            }
-            if (e.target.matches('.team-score')) {
-                const { game, team } = e.target.dataset;
-                const value = Math.max(0, parseInt(e.target.value) || 0);
-                await db.ref(`game${game}/team${team}/score`).set(value);
-            }
-        });
-
-    } catch (error) {
-        console.error('Initialization failed:', error);
-        alert('App initialization failed. Check console.');
-    }
-});
-</script>
+    </script>
 </body>
 </html>
