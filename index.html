@@ -141,137 +141,147 @@
         </script>
     </div>
 
-    <script>
-        function uploadTeamLogo(game, team) {
-            const file = document.getElementById(`logo${team}-upload-game${game}`).files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    localStorage.setItem(`team-logo-${team}-game${game}`, e.target.result);
-                    document.getElementById(`logo${team}-game${game}`).src = e.target.result;
-                };
-                reader.readAsDataURL(file);
+   <script>
+        // Firebase configuration (replace with your actual values)
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const scoreboardRef = db.ref('scoreboard');
+
+        // Modified Storage Management for Firebase
+        function getFirebasePath(game, team, type) {
+            return `game${game}/team${team}/${type}`;
+        }
+
+        // Modified Event Handlers for Firebase
+        async function handleLogoUpload(e) {
+            const { game, team } = e.target.dataset;
+            const file = e.target.files[0];
+            
+            if (!file?.type.startsWith('image/')) {
+                alert('Please upload an image file');
+                return;
             }
-        }
 
-        function updateTeamName(game, team, name) {
-            localStorage.setItem(`team-name-${team}-game${game}`, name);
-        }
-
-        function updateScore(game, team, score) {
-            localStorage.setItem(`team-score-${team}-game${game}`, score);
-        }
-
-        function adjustScore(game, team, points) {
-            const scoreElement = document.getElementById(`score${team}-game${game}`);
-            let score = parseInt(scoreElement.value) + points;
-            scoreElement.value = score;
-            updateScore(game, team, score);
-        }
-
-        function resetScore(game, team) {
-            document.getElementById(`score${team}-game${game}`).value = 0;
-            updateScore(game, team, 0);
-        }
-
-        function uploadBackground() {
-            const file = document.getElementById('backgroundUpload').files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    document.body.style.backgroundImage = `url(${e.target.result})`;
-                    localStorage.setItem('background-image', e.target.result);
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        function clearBackground() {
-            document.body.style.backgroundImage = '';
-            localStorage.removeItem('background-image');
-        }
-
-        window.addEventListener('load', () => {
-            for (let game = 1; game <= 3; game++) {
-                for (let team = 1; team <= 2; team++) {
-                    const logo = localStorage.getItem(`team-logo-${team}-game${game}`);
-                    if (logo) {
-                        document.getElementById(`logo${team}-game${game}`).src = logo;
-                    }
-                    const name = localStorage.getItem(`team-name-${team}-game${game}`);
-                    if (name) {
-                        document.getElementById(`name${team}-game${game}`).value = name;
-                    }
-                    const score = localStorage.getItem(`team-score-${team}-game${game}`);
-                    if (score) {
-                        document.getElementById(`score${team}-game${game}`).value = score;
-                    }
-                }
-            }
-            const background = localStorage.getItem('background-image');
-            if (background) {
-                document.body.style.backgroundImage = `url(${background})`;
-            }
-        });
- // Update these functions to match scoreboard's key pattern
-    function updateTeamName(game, team, name) {
-        localStorage.setItem(`name-${team}-${game}`, name);
-        window.dispatchEvent(new Event('storage'));
-    }
-
-    function updateScore(game, team, score) {
-        localStorage.setItem(`score-${team}-${game}`, score);
-        window.dispatchEvent(new Event('storage'));
-    }
-
-    function adjustScore(game, team, points) {
-        const scoreElement = document.getElementById(`score${team}-game${game}`);
-        let score = parseInt(scoreElement.value) + points;
-        scoreElement.value = score;
-        updateScore(game, team, score);
-    }
-
-    function resetScore(game, team) {
-        document.getElementById(`score${team}-game${game}`).value = 0;
-        updateScore(game, team, 0);
-    }
-
-    // Update background storage key to match scoreboard
-    function uploadBackground() {
-        const file = document.getElementById('backgroundUpload').files[0];
-        if (file) {
             const reader = new FileReader();
-            reader.onload = function(e) {
-                document.body.style.backgroundImage = `url(${e.target.result})`;
-                localStorage.setItem('scoreboard-background', e.target.result);
+            reader.onload = async (event) => {
+                const path = getFirebasePath(game, team, 'logo');
+                await db.ref(path).set(event.target.result);
             };
             reader.readAsDataURL(file);
         }
-    }
 
-    window.addEventListener('load', () => {
-        // Load existing data with correct key pattern
-        for (let game = 1; game <= 3; game++) {
-            for (let team = 1; team <= 2; team++) {
-                const logo = localStorage.getItem(`team-logo-${team}-game${game}`);
-                if (logo) {
-                    document.getElementById(`logo${team}-game${game}`).src = logo;
-                }
-                const name = localStorage.getItem(`name-${team}-${game}`);
-                if (name) {
-                    document.getElementById(`name${team}-game${game}`).value = name;
-                }
-                const score = localStorage.getItem(`score-${team}-${game}`);
-                if (score) {
-                    document.getElementById(`score${team}-game${game}`).value = score;
-                }
+        async function handleScoreAdjust(e) {
+            const points = parseInt(e.target.dataset.points);
+            const scoreInput = e.target.closest('.points-buttons').previousElementSibling;
+            const { game, team } = scoreInput.dataset;
+            
+            const newScore = Math.max(0, parseInt(scoreInput.value) + points);
+            const path = getFirebasePath(game, team, 'score');
+            await db.ref(path).set(newScore);
+        }
+
+        async function handleReset(e) {
+            const scoreInput = e.target.previousElementSibling.querySelector('.team-score');
+            const { game, team } = scoreInput.dataset;
+            const path = getFirebasePath(game, team, 'score');
+            await db.ref(path).set(0);
+        }
+
+        // Modified Background Handling
+        document.getElementById('backgroundUpload').addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (!file?.type.startsWith('image/')) {
+                alert('Please upload an image file');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                await db.ref('background').set(event.target.result);
+            };
+            reader.readAsDataURL(file);
+        });
+
+        async function clearBackground() {
+            await db.ref('background').set('');
+        }
+
+        // Real-time Sync from Firebase
+        function setupFirebaseListeners() {
+            // Listen for all scoreboard changes
+            scoreboardRef.on('value', (snapshot) => {
+                const data = snapshot.val() || {};
+                syncFromFirebase(data);
+            });
+        }
+
+        function syncFromFirebase(data) {
+            // Update team names
+            document.querySelectorAll('.team-name').forEach(input => {
+                const { game, team } = input.dataset;
+                const value = data?.[`game${game}`]?.[`team${team}`]?.name || '';
+                if (input.value !== value) input.value = value;
+            });
+
+            // Update scores
+            document.querySelectorAll('.team-score').forEach(input => {
+                const { game, team } = input.dataset;
+                const value = data?.[`game${game}`]?.[`team${team}`]?.score || 0;
+                if (input.value !== value.toString()) input.value = value;
+            });
+
+            // Update logos
+            document.querySelectorAll('.team-logo').forEach(img => {
+                const [_, team, game] = img.id.split('-');
+                const logo = data?.[`game${game}`]?.[`team${team}`]?.logo || '';
+                if (img.src !== logo) img.src = logo;
+            });
+
+            // Update background
+            const background = data?.background || '';
+            if (document.body.style.backgroundImage !== `url(${background})`) {
+                document.body.style.backgroundImage = background ? `url(${background})` : '';
             }
         }
-        const background = localStorage.getItem('scoreboard-background');
-        if (background) {
-            document.body.style.backgroundImage = `url(${background})`;
-        }
-    });
+
+        // Initialize Application
+        document.addEventListener('DOMContentLoaded', () => {
+            createGameElements();
+            setupFirebaseListeners();
+            
+            // Event Delegation
+            document.addEventListener('change', e => {
+                if (e.target.matches('.logo-upload')) handleLogoUpload(e);
+                if (e.target.matches('.team-name')) {
+                    const { game, team } = e.target.dataset;
+                    db.ref(getFirebasePath(game, team, 'name')).set(e.target.value);
+                }
+                if (e.target.matches('.team-score')) {
+                    const { game, team } = e.target.dataset;
+                    const value = Math.max(0, parseInt(e.target.value) || 0);
+                    db.ref(getFirebasePath(game, team, 'score')).set(value);
+                }
+            });
+
+            document.addEventListener('click', e => {
+                if (e.target.matches('.points-buttons button')) handleScoreAdjust(e);
+                if (e.target.matches('.reset-button')) handleReset(e);
+            });
+        });
     </script>
+</body>
+</html>
+
 </body>
 </html>
