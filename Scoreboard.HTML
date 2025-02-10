@@ -48,9 +48,12 @@
 
         .team-display {
             text-align: center;
-            flex: 1;
-            padding: 20px;
-        }
+    flex: 1;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
 
         .team-logo {
             width: 120px;
@@ -69,11 +72,15 @@
         }
 
         .score {
-            font-size: 3.5em;
-            color: #1E90FF;
-            margin: 15px 0;
-            transition: all 0.3s ease;
-        }
+           font-size: 5em;  /* Increased from 3.5em */
+    color: #1E90FF;
+    margin: 20px 0;
+    transition: all 0.3s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 120px;  /* Added for consistent spacing */
+}
 
         .game-title {
             text-align: center;
