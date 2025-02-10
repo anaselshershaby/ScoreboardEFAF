@@ -1,170 +1,161 @@
-<!-- scoreboard.html -->
+<!-- dashboard.html -->
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Live Scoreboard</title>
+    <title>Firebase Score Dashboard</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=College&family=Varsity+Team&display=swap">
+    <!-- Add Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.2/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.2/firebase-database.js"></script>
     <style>
-        :root {
-            --college-font: 'Varsity Team', 'College', Impact, sans-serif;
-            --score-color: #FFD700;
-        }
-
-        body {
-            background: #000;
-            color: white;
-            margin: 0;
-            padding: 20px;
-            transition: background 0.5s ease-in-out;
-            background-size: cover;
-            background-position: center;
-        }
-
-        .scoreboard-container {
-            display: flex;
-            flex-direction: column;
-            gap: 40px;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-        }
-
-        .game {
-            background: #111;
-            padding: 20px;
-            border-radius: 10px;
-            width: 90%;
-            max-width: 1000px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border: 3px solid #444;
-            position: relative;
-        }
-
-        .team {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-            width: 35%;
-            justify-content: center;
-            overflow: hidden;
-        }
-
-        .logo {
-            width: 150px;
-            height: 150px;
-            max-width: 100%;
-            object-fit: contain;
-            filter: drop-shadow(0 0 10px rgba(255,255,255,0.2));
-        }
-
-        .name {
-            font-family: var(--college-font);
-            font-size: 36px;
-            text-align: center;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 200px;
-        }
-
-        .score {
-            font-family: var(--college-font);
-            font-size: 120px;
-            margin: 0 30px;
-            color: var(--score-color);
-            text-shadow: 3px 3px 6px rgba(0,0,0,0.7);
-            transition: all 0.3s ease;
-        }
-
+        /* [Keep all previous CSS styles unchanged] */
     </style>
 </head>
 <body>
-<a href="index.html" target="_blank" style="color: white; text-decoration: none; font-size: 18px;">Back to Dashboard</a>
-    <div class="scoreboard-container">
-        <script>
-            for (let game = 1; game <= 3; game++) {
-                document.write(`
-                    <div class="game">
-                        <div class="team">
-                            <div class="name" id="name1-game${game}">${localStorage.getItem(`name-1-${game}`) || `HOME TEAM ${game}`}</div>
-                            <img id="logo1-game${game}" class="logo" src="" alt="Home Team ${game} Logo">
-                        </div>
-                        <div class="score" id="score1-game${game}">${localStorage.getItem(`score-1-${game}`) || 0}</div>
-                        <div class="score" id="score2-game${game}">${localStorage.getItem(`score-2-${game}`) || 0}</div>
-                        <div class="team">
-                            <div class="name" id="name2-game${game}">${localStorage.getItem(`name-2-${game}`) || `AWAY TEAM ${game}`}</div>
-                            <img id="logo2-game${game}" class="logo" src="" alt="Away Team ${game} Logo">
-                        </div>
-                    </div>
-                `);
-            }
-        </script>
-    </div>
+    <!-- [Keep all previous HTML structure unchanged] -->
+
     <script>
-        function updateScoreboard() {
-            for (let game = 1; game <= 3; game++) {
-                for (let team = 1; team <= 2; team++) {
-                    document.getElementById(`name${team}-game${game}`).textContent = localStorage.getItem(`name-${team}-${game}`) || `Team ${team} ${game}`;
-                    document.getElementById(`score${team}-game${game}`).textContent = localStorage.getItem(`score-${team}-${game}`) || 0;
-                    const logo = localStorage.getItem(`team-logo-${team}-game${game}`);
-                    if (logo) {
-                        document.getElementById(`logo${team}-game${game}`).src = logo;
-                    }
+        // Your Firebase config (replace with your actual config)
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const scoreboardRef = db.ref('scoreboard');
+
+        // Firebase-connected functions
+        function createGameElements() {
+            /* [Keep previous createGameElements implementation unchanged] */
+        }
+
+        function createTeamControl(game, team) {
+            /* [Keep previous createTeamControl implementation unchanged] */
+        }
+
+        // Real-time Database Handlers
+        function setupFirebaseListeners() {
+            // Listen for score changes
+            scoreboardRef.on('value', (snapshot) => {
+                const data = snapshot.val() || {};
+                this.syncFromFirebase(data);
+            });
+        }
+
+        function syncFromFirebase(data) {
+            // Update team names and scores
+            document.querySelectorAll('.team-name, .team-score').forEach(input => {
+                const { game, team } = input.dataset;
+                const type = input.classList.contains('team-name') ? 'name' : 'score';
+                const value = data?.[`game${game}`]?.[`team${team}`]?.[type] || '';
+                if (input.value !== value) input.value = value;
+            });
+
+            // Update team logos
+            document.querySelectorAll('.team-logo').forEach(img => {
+                const [_, team, game] = img.id.split('-');
+                const logo = data?.[`game${game}`]?.[`team${team}`]?.logo || '';
+                if (img.src !== logo) img.src = logo;
+            });
+
+            // Update background
+            const background = data?.background || '';
+            if (document.body.style.backgroundImage !== `url(${background})`) {
+                document.body.style.backgroundImage = background ? `url(${background})` : '';
+            }
+        }
+
+        async function updateFirebase(path, value) {
+            try {
+                await db.ref(path).set(value);
+            } catch (error) {
+                console.error('Firebase update failed:', error);
+            }
+        }
+
+        // Modified Event Handlers
+        async function handleLogoUpload(e) {
+            const { game, team } = e.target.dataset;
+            const file = e.target.files[0];
+            
+            if (!file?.type.startsWith('image/')) {
+                alert('Please upload an image file');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                const logoPath = `game${game}/team${team}/logo`;
+                await updateFirebase(logoPath, event.target.result);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function handleScoreAdjust(e) {
+            const points = parseInt(e.target.dataset.points);
+            const scoreInput = e.target.closest('.points-buttons').previousElementSibling;
+            const { game, team } = scoreInput.dataset;
+            
+            const newScore = Math.max(0, parseInt(scoreInput.value) + points;
+            await updateFirebase(`game${game}/team${team}/score`, newScore);
+        }
+
+        async function handleReset(e) {
+            const scoreInput = e.target.previousElementSibling.querySelector('.team-score');
+            const { game, team } = scoreInput.dataset;
+            await updateFirebase(`game${game}/team${team}/score`, 0);
+        }
+
+        // Modified Background Handling
+        document.getElementById('backgroundUpload').addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (!file?.type.startsWith('image/')) {
+                alert('Please upload an image file');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                await updateFirebase('background', event.target.result);
+            };
+            reader.readAsDataURL(file);
+        });
+
+        async function clearBackground() {
+            await updateFirebase('background', '');
+        }
+
+        // Initialize Application
+        document.addEventListener('DOMContentLoaded', () => {
+            createGameElements();
+            setupFirebaseListeners();
+            
+            // Event Delegation (keep previous implementation unchanged)
+            document.addEventListener('change', e => {
+                if (e.target.matches('.logo-upload')) handleLogoUpload(e);
+                if (e.target.matches('.team-name')) {
+                    const { game, team } = e.target.dataset;
+                    updateFirebase(`game${game}/team${team}/name`, e.target.value);
                 }
-            }
-            const background = localStorage.getItem("scoreboard-background");
-            if (background) {
-                document.body.style.backgroundImage = `url(${background})`;
-            }
-        }
-        
-        window.addEventListener("storage", updateScoreboard);
-        window.addEventListener("load", updateScoreboard);
+                if (e.target.matches('.team-score')) {
+                    const { game, team } = e.target.dataset;
+                    const value = Math.max(0, parseInt(e.target.value) || 0);
+                    updateFirebase(`game${game}/team${team}/score`, value);
+                }
+            });
+
+            document.addEventListener('click', e => {
+                if (e.target.matches('.points-buttons button')) handleScoreAdjust(e);
+                if (e.target.matches('.reset-button')) handleReset(e);
+            });
+        });
     </script>
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
-<script>
-  // Your Firebase Configuration
-  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyBnHWRcCF4P8aneCbpKPWj3picLajwjEJA",
-  authDomain: "efaf-scoreborad.firebaseapp.com",
-  databaseURL: "https://efaf-scoreborad-default-rtdb.firebaseio.com",
-  projectId: "efaf-scoreborad",
-  storageBucket: "efaf-scoreborad.firebasestorage.app",
-  messagingSenderId: "422493280611",
-  appId: "1:422493280611:web:76bff49b2ed92464b2db56",
-  measurementId: "G-2P220TFGL6"
-};
-  };
-
-  // Initialize Firebase
-  const app = firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
-</script>
-<script>
-function syncScoreboard() {
-    for (let game = 1; game <= 3; game++) {
-        for (let team = 1; team <= 2; team++) {
-            let scoreRef = db.ref(`games/game${game}/team${team}/score`);
-            let nameRef = db.ref(`games/game${game}/team${team}/name`);
-
-            scoreRef.on("value", snapshot => {
-                document.getElementById(`score${team}-game${game}`).textContent = snapshot.val() || 0;
-            });
-
-            nameRef.on("value", snapshot => {
-                document.getElementById(`name${team}-game${game}`).textContent = snapshot.val() || `Team ${team}`;
-            });
-        }
-    }
-}
-
-window.onload = syncScoreboard;
-</script>
-
 </body>
 </html>
