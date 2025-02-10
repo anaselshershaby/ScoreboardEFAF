@@ -138,9 +138,7 @@
                 `);
             }
         </script>
-    </div>
-
-   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    </div><script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
 <script>
   // Firebase Configuration
@@ -169,11 +167,13 @@
       }
   }
 
-  function updateTeamName(game, team, name) {
+  function updateTeamName(game, team) {
+      const name = document.getElementById(`name${team}-game${game}`).value;
       db.ref(`games/game${game}/team${team}/name`).set(name);
   }
 
-  function updateScore(game, team, score) {
+  function updateScore(game, team) {
+      const score = parseInt(document.getElementById(`score${team}-game${game}`).value) || 0;
       db.ref(`games/game${game}/team${team}/score`).set(score);
   }
 
@@ -182,7 +182,7 @@
       scoreRef.once("value").then(snapshot => {
           let newScore = (snapshot.val() || 0) + points;
           if (newScore < 0) newScore = 0;
-          scoreRef.set(newScore);
+          db.ref(`games/game${game}/team${team}/score`).set(newScore);
       });
   }
 
@@ -267,5 +267,6 @@
       syncScoreboard();
   };
 </script>
+
 </body>
 </html>
