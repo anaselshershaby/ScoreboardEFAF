@@ -2,12 +2,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Control Dashboard</title>
+    <title>Score Control Dashboard</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=College&family=Varsity+Team&display=swap">
     <script src="https://www.gstatic.com/firebasejs/9.0.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.2/firebase-database-compat.js"></script>
     <style>
-        /* Keep all your original CSS styles */
         :root {
             --sports-font: 'Varsity Team', 'College', Impact, Haettenschweiler, 
                           'Arial Narrow Bold', sans-serif;
@@ -111,7 +110,7 @@
         }
 
         .reset-button {
-            background: #FF4500 !important;
+            background: #FF4500;
             margin-top: 10px;
         }
 
@@ -133,13 +132,13 @@
         <div class="upload-container">
             <label for="backgroundUpload">Upload Background:</label>
             <input type="file" id="backgroundUpload" accept="image/*">
-            <button class="reset-button">Clear Background</button>
+            <button class="reset-button" id="clearBackground">Clear Background</button>
         </div>
         <div id="games-container"></div>
     </div>
 
     <script>
-        // Firebase Configuration - REPLACE WITH YOUR VALUES
+        // Firebase Configuration - Replace with your values
         const firebaseConfig = {
             apiKey: "YOUR_API_KEY",
             authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
@@ -155,6 +154,7 @@
         const db = firebase.database();
         const scoreboardRef = db.ref('scoreboard');
 
+        // Game Elements Creation
         function createGameElements() {
             const container = document.getElementById('games-container');
             container.innerHTML = '';
@@ -177,7 +177,8 @@
                     <div class="team-title">${team === 1 ? 'Home' : 'Away'}</div>
                     <img class="team-logo" data-game="${game}" data-team="${team}">
                     <input type="file" class="logo-upload" data-game="${game}" data-team="${team}" accept="image/*">
-                    <input type="text" class="team-name" data-game="${game}" data-team="${team}" placeholder="${team === 1 ? 'Home' : 'Away'} Team">
+                    <input type="text" class="team-name" data-game="${game}" data-team="${team}" 
+                           placeholder="${team === 1 ? 'Home' : 'Away'} Team">
                     <input type="number" class="team-score" data-game="${game}" data-team="${team}" value="0" min="0">
                     <div class="points-buttons">
                         <button data-points="1">+1</button>
@@ -251,12 +252,13 @@
         async function handleClearBackground() {
             try {
                 await db.ref('background').set('');
+                document.body.style.backgroundImage = '';
             } catch (error) {
                 console.error('Clear background failed:', error);
             }
         }
 
-        // Real-time Updates
+        // Real-time Sync
         function setupFirebaseListeners() {
             scoreboardRef.on('value', (snapshot) => {
                 const data = snapshot.val() || {};
@@ -280,13 +282,13 @@
                 });
 
                 // Update background
-                if (data.background) {
-                    document.body.style.backgroundImage = `url(${data.background})`;
-                }
+                document.body.style.backgroundImage = data.background 
+                    ? `url(${data.background})` 
+                    : '';
             });
         }
 
-        // Initialize
+        // Initialize Application
         document.addEventListener('DOMContentLoaded', () => {
             createGameElements();
             setupFirebaseListeners();
@@ -312,7 +314,7 @@
             document.addEventListener('click', (event) => {
                 if (event.target.matches('.points-buttons button')) handleScoreAdjust(event);
                 if (event.target.matches('.reset-button')) handleResetScore(event);
-                if (event.target.matches('.reset-button')) handleClearBackground();
+                if (event.target.matches('#clearBackground')) handleClearBackground();
             });
         });
     </script>
